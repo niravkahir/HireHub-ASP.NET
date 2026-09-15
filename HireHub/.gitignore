@@ -1,0 +1,67 @@
+﻿# ============ .NET / Visual Studio ============
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Visual Studio Code
+.vscode/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# ============ NuGet ============
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+
+# ============ SQL / Local DB ============
+*.mdf
+*.ldf
+*.ndf
+
+# ============ User uploads (resumes, logos) ============
+# These are runtime user data — never commit
+wwwroot/uploads/resumes/*
+wwwroot/uploads/logos/*
+!wwwroot/uploads/resumes/.gitkeep
+!wwwroot/uploads/logos/.gitkeep
+
+# ============ Secrets ============
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.pfx
+*.p12
+
+# ============ OS junk ============
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ============ Logs ============
+*.log
+logs/
+
+# ============ Test results ============
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
