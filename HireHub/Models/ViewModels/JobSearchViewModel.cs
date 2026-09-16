@@ -1,14 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HireHub.Models.Entities;
+using HireHub.Models.Enums;
 
 namespace HireHub.Models.ViewModels
 {
-    public class LoginViewModel
+    public class JobSearchViewModel
     {
-        [Required, EmailAddress]
-        public string Email { get; set; } = string.Empty;
+        public string? Keyword { get; set; }
+        public string? Location { get; set; }
+        public JobType? JobType { get; set; }
+        public ExperienceLevel? ExperienceLevel { get; set; }
+        public decimal? MinSalary { get; set; }
 
-        [Required, DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
-
+        public List<Job> Results { get; set; } = new();
     }
 }

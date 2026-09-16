@@ -13,7 +13,7 @@ namespace HireHub.Models.Entities
         public string? ResumePath { get; set; }
 
         public ApplicationStatus Status { get; set; } = ApplicationStatus.Applied;
-        public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
+        public DateTime AppliedAt { get; set; } 
         public DateTime? UpdatedAt { get; set; }
 
         public Job Job { get; set; } = null!;
