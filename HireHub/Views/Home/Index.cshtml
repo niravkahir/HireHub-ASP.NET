@@ -1,3 +1,17 @@
-﻿<h2>Model Test</h2>
-<p>Job Title: @ViewBag.TestTitle</p>
-<p>Company: @ViewBag.TestCompany</p>
+﻿@{
+    ViewData["Title"] = "Welcome to HireHub";
+}
+
+<div class="text-center py-5">
+    <h1 class="display-3 fw-bold">Welcome to HireHub</h1>
+    <p class="lead mt-3">Where Jobs Find Talent, and Talent Finds Jobs.</p>
+
+    <div class="mt-4">
+        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">
+            Get Started
+        </a>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary btn-lg">
+            Login
+        </a>
+    </div>
+</div>

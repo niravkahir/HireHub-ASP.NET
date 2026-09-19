@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HireHub.Data
 {
-    // ✅ Inherit from IdentityDbContext<ApplicationUser>, NOT plain DbContext
+    // Inherit from IdentityDbContext<ApplicationUser>, NOT plain DbContext
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -12,7 +12,6 @@ namespace HireHub.Data
         {
         }
 
-        // Your domain tables
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
@@ -23,9 +22,7 @@ namespace HireHub.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(builder);   // ⚠️ MUST call this — Identity configures its own tables here
-
-            // Your custom configurations (relationships, indexes) go below
+            base.OnModelCreating(builder);   
 
             // One-to-one: ApplicationUser ↔ JobSeekerProfile
             builder.Entity<JobSeekerProfile>()

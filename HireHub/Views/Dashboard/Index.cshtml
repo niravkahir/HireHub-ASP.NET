@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container mt-4">
+    <h1>Welcome, @ViewBag.FullName 👋</h1>
+    <p>You are logged in as: <strong>@string.Join(", ", ViewBag.Roles)</strong></p>
+    <p>Email: @ViewBag.Email</p>
+
+    <hr />
+
+    @if (ViewBag.Roles.Contains("Admin"))
+    {
+        <div class="alert alert-danger">
+            <h4>Admin Panel</h4>
+            <p>You can manage users, jobs, and applications from here.</p>
+            <a href="#" class="btn btn-outline-danger">Go to Admin</a>
+        </div>
+    }
+    else if (ViewBag.Roles.Contains("Recruiter"))
+    {
+        <div class="alert alert-info">
+            <h4>Recruiter Panel</h4>
+            <p>Post jobs, manage company, and review applicants.</p>
+            <a href="#" class="btn btn-outline-info">Go to Recruiter</a>
+        </div>
+    }
+    else if (ViewBag.Roles.Contains("JobSeeker"))
+    {
+        <div class="alert alert-success">
+            <h4>Job Seeker Panel</h4>
+            <p>Browse jobs, apply, save for later, and track applications.</p>
+            <a href="#" class="btn btn-outline-success">Browse Jobs</a>
+        </div>
+    }
+</div>
