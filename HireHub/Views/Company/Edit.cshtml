@@ -1,0 +1,61 @@
+﻿@model HireHub.Models.Entities.Company
+@{
+    ViewData["Title"] = "Edit Company";
+}
+
+<div class="container mt-4">
+    <h2>Edit Company</h2>
+    <hr />
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CreatedAt" />
+        <input type="hidden" asp-for="LogoPath" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Website" class="form-label"></label>
+            <input asp-for="Website" class="form-control" />
+            <span asp-validation-for="Website" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Location" class="form-label"></label>
+            <input asp-for="Location" class="form-control" />
+            <span asp-validation-for="Location" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Change Logo (optional)</label>
+            <input type="file" name="logoFile" class="form-control" accept="image/*" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.LogoPath))
+        {
+            <div class="mb-3">
+                <label class="form-label">Current Logo:</label><br />
+                <img src="@Model.LogoPath" alt="Current Logo" style="max-height: 100px;" class="rounded" />
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
