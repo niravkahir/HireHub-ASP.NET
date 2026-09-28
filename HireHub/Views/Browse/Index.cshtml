@@ -1,0 +1,98 @@
+﻿@model HireHub.Models.ViewModels.JobSearchViewModel
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "Browse Jobs";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Browse Jobs</h2>
+
+    <!-- Search + Filters -->
+    <form asp-action="Index" method="get" class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label small">Keyword</label>
+                    <input type="text" name="keyword" value="@Model.Keyword"
+                           class="form-control" placeholder="Job title, skill..." />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small">Location</label>
+                    <input type="text" name="location" value="@Model.Location"
+                           class="form-control" placeholder="City..." />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small">Job Type</label>
+                    <select name="jobType" class="form-select" asp-items="ViewBag.JobTypes">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small">Experience</label>
+                    <select name="experienceLevel" class="form-select" asp-items="ViewBag.ExperienceLevels">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted">
+        Found <strong>@Model.Results.Count</strong> job(s)
+    </p>
+
+    @if (!Model.Results.Any())
+    {
+        <div class="alert alert-info">No jobs found matching your criteria.</div>
+    }
+    else
+    {
+        foreach (var job in Model.Results)
+        {
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="mb-1">
+                                <a asp-action="Details" asp-route-id="@job.Id"
+                                   class="text-decoration-none fw-bold">
+                                    @job.Title
+                                </a>
+                            </h5>
+                            <p class="text-muted mb-1">
+                                🏢 @job.Company?.Name — 📍 @job.Location
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">@job.JobType</span>
+                            <span class="badge bg-info text-dark">@job.ExperienceLevel</span>
+                        </div>
+                    </div>
+
+                    <p class="mt-2 mb-1 text-truncate">@job.Description</p>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">
+                            Posted: @job.PostedAt.ToString("dd MMM yyyy")
+                            @if (job.SalaryMin.HasValue && job.SalaryMax.HasValue)
+                            {
+                                <span class="ms-3">💰 @job.SalaryMin - @job.SalaryMax</span>
+                            }
+                        </small>
+                        <a asp-action="Details" asp-route-id="@job.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            View Details →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

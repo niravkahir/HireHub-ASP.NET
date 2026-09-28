@@ -1,0 +1,77 @@
+﻿@model HireHub.Models.Entities.Job
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">← Back to Jobs</a>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h2>@Model.Title</h2>
+                    <p class="text-muted">
+                        🏢 <strong>@Model.Company?.Name</strong> — 📍 @Model.Location
+                    </p>
+
+                    <div class="mb-3">
+                        <span class="badge bg-primary">@Model.JobType</span>
+                        <span class="badge bg-info text-dark">@Model.ExperienceLevel</span>
+                    </div>
+
+                    <hr />
+
+                    <h5>Job Description</h5>
+                    <p>@Model.Description</p>
+
+                    @if (!string.IsNullOrEmpty(Model.Requirements))
+                    {
+                        <h5 class="mt-4">Requirements</h5>
+                        <p>@Model.Requirements</p>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            @if (Model.SalaryMin.HasValue && Model.SalaryMax.HasValue)
+                            {
+                                <p><strong>💰 Salary:</strong> @Model.SalaryMin - @Model.SalaryMax</p>
+                            }
+
+                            <p><strong>📅 Posted:</strong> @Model.PostedAt.ToString("dd MMM yyyy")</p>
+
+                            @if (Model.Deadline.HasValue)
+                            {
+                                <p><strong>⏰ Deadline:</strong> @Model.Deadline.Value.ToString("dd MMM yyyy")</p>
+                            }
+
+                            <hr />
+
+                            @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("JobSeeker"))
+                            {
+                                <a href="#" class="btn btn-success w-100 mb-2">Apply Now</a>
+                                <a href="#" class="btn btn-outline-secondary w-100">Save Job</a>
+                                <p class="text-muted small mt-2 text-center">Coming in 5.4 & 5.8</p>
+                            }
+                            else if (User.Identity != null && User.Identity.IsAuthenticated)
+                            {
+                                <p class="text-muted small text-center mb-0">
+                                    Only Job Seekers can apply.
+                                </p>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login"
+                                   class="btn btn-primary w-100">
+                                    Login to Apply
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

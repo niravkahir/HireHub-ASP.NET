@@ -66,10 +66,8 @@ logs/
 coverage*.json
 coverage*.xml
 
-# Ignore uploaded logos and resumes
-wwwroot/uploads/logos/*
-wwwroot/uploads/resumes/*
-
-# But keep the folder via .gitkeep
-!wwwroot/uploads/logos/.gitkeep
-!wwwroot/uploads/resumes/.gitkeep
+# Ignore uploads in the project folder
+HireHub/wwwroot/uploads/logos/*
+HireHub/wwwroot/uploads/resumes/*
+!HireHub/wwwroot/uploads/logos/.gitkeep
+!HireHub/wwwroot/uploads/resumes/.gitkeep
