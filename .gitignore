@@ -65,3 +65,11 @@ logs/
 [Tt]est[Rr]esult*/
 coverage*.json
 coverage*.xml
+
+# Ignore uploaded logos and resumes
+wwwroot/uploads/logos/*
+wwwroot/uploads/resumes/*
+
+# But keep the folder via .gitkeep
+!wwwroot/uploads/logos/.gitkeep
+!wwwroot/uploads/resumes/.gitkeep

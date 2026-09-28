@@ -7,11 +7,37 @@
     <p class="lead mt-3">Where Jobs Find Talent, and Talent Finds Jobs.</p>
 
     <div class="mt-4">
-        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">
-            Get Started
-        </a>
-        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary btn-lg">
-            Login
-        </a>
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary btn-lg">
+                Go to Dashboard
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">
+                Get Started
+            </a>
+            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary btn-lg">
+                Login
+            </a>
+        }
+    </div>
+</div>
+
+<hr />
+
+<div class="row text-center mt-4">
+    <div class="col-md-4">
+        <h3>🔍 Find Jobs</h3>
+        <p>Search thousands of jobs by location, salary, and category.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>📄 Apply Easily</h3>
+        <p>Apply with your resume in a single click and track your status.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>🏢 Hire Talent</h3>
+        <p>Post jobs and manage applicants with our recruiter tools.</p>
     </div>
 </div>

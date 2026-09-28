@@ -1,0 +1,86 @@
+﻿@model List<HireHub.Models.Entities.Job>
+@{
+    ViewData["Title"] = "My Jobs";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>My Jobs</h2>
+            <p class="text-muted mb-0">Company: <strong>@ViewBag.CompanyName</strong></p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">+ Post New Job</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You haven't posted any jobs yet. Click <strong>Post New Job</strong> to get started.
+        </div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th>Posted</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var job in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@job.Id" class="fw-bold text-decoration-none">
+                                @job.Title
+                            </a>
+                        </td>
+                        <td>@job.Location</td>
+                        <td>@job.JobType</td>
+                        <td>@job.PostedAt.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @if (job.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Closed</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@job.Id" class="btn btn-sm btn-warning">Edit</a>
+
+                            <form asp-action="ToggleStatus" asp-route-id="@job.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-info">
+                                    @(job.IsActive ? "Close" : "Reopen")
+                                </button>
+                            </form>
+
+                            <form asp-action="Delete" asp-route-id="@job.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Delete this job?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

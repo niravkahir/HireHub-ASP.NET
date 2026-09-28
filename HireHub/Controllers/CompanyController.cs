@@ -28,22 +28,34 @@ namespace HireHub.Controllers
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
+            Console.WriteLine($"===== Company/Index =====");
+            Console.WriteLine($"userId = {userId ?? "NULL"}");
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
             var recruiterProfile = await _db.RecruiterProfiles
                 .Include(r => r.Company)
                 .FirstOrDefaultAsync(r => r.UserId == userId);
 
-            // Auto-create profile if missing
             if (recruiterProfile == null)
             {
-                recruiterProfile = new RecruiterProfile { UserId = userId! };
+                Console.WriteLine("Profile NULL → creating new");
+                recruiterProfile = new RecruiterProfile { UserId = userId };
                 _db.RecruiterProfiles.Add(recruiterProfile);
                 await _db.SaveChangesAsync();
+                Console.WriteLine($"Created profile Id = {recruiterProfile.Id}");
+            }
+            else
+            {
+                Console.WriteLine($"Profile found Id = {recruiterProfile.Id}, CompanyId = {recruiterProfile.CompanyId}");
             }
 
-            // No company yet → go create one
             if (recruiterProfile.CompanyId == null)
             {
+                Console.WriteLine("No company → redirect to Create");
                 return RedirectToAction(nameof(Create));
             }
 
@@ -61,12 +73,13 @@ namespace HireHub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Company model, IFormFile? logoFile)
         {
+            Console.WriteLine($"===== Company/Create POST =====");
+            Console.WriteLine($"ModelState.IsValid = {ModelState.IsValid}");
+
             if (!ModelState.IsValid) return View(model);
 
-            // ✅ FIX: Set CreatedAt explicitly
             model.CreatedAt = DateTime.UtcNow;
 
-            // Handle logo upload
             if (logoFile != null && logoFile.Length > 0)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(logoFile.FileName);
@@ -84,17 +97,31 @@ namespace HireHub.Controllers
 
             _db.Companies.Add(model);
             await _db.SaveChangesAsync();
+            Console.WriteLine($"Company saved Id={model.Id}");
 
-            // Attach company to recruiter profile
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login", "Account");
+
             var profile = await _db.RecruiterProfiles
                 .FirstOrDefaultAsync(r => r.UserId == userId);
 
-            if (profile != null)
+            if (profile == null)
+            {
+                Console.WriteLine("Profile NULL → creating new");
+                profile = new RecruiterProfile
+                {
+                    UserId = userId,
+                    CompanyId = model.Id
+                };
+                _db.RecruiterProfiles.Add(profile);
+            }
+            else
             {
                 profile.CompanyId = model.Id;
-                await _db.SaveChangesAsync();
             }
+
+            await _db.SaveChangesAsync();
+            Console.WriteLine($"Linked profile to CompanyId={model.Id}");
 
             return RedirectToAction(nameof(Index));
         }
@@ -104,7 +131,6 @@ namespace HireHub.Controllers
         {
             var company = await _db.Companies.FindAsync(id);
             if (company == null) return NotFound();
-
             return View(company);
         }
 
@@ -124,11 +150,8 @@ namespace HireHub.Controllers
             company.Website = model.Website;
             company.Location = model.Location;
 
-            // ✅ Ensure CreatedAt is preserved (in case it got lost)
             if (company.CreatedAt.Year < 2000)
-            {
                 company.CreatedAt = DateTime.UtcNow;
-            }
 
             if (logoFile != null && logoFile.Length > 0)
             {

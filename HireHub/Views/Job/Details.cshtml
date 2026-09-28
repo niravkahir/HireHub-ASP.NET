@@ -1,0 +1,67 @@
+﻿@model HireHub.Models.Entities.Job
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>@Model.Title</h2>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="fw-bold">@Model.Company?.Name</h5>
+                    <p class="text-muted">📍 @Model.Location</p>
+                    <hr />
+                    <h6>Description</h6>
+                    <p>@Model.Description</p>
+
+                    @if (!string.IsNullOrEmpty(Model.Requirements))
+                    {
+                        <h6>Requirements</h6>
+                        <p>@Model.Requirements</p>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <p><strong>Job Type:</strong> @Model.JobType</p>
+                            <p><strong>Experience:</strong> @Model.ExperienceLevel</p>
+
+                            @if (Model.SalaryMin.HasValue && Model.SalaryMax.HasValue)
+                            {
+                                <p><strong>Salary:</strong> @Model.SalaryMin - @Model.SalaryMax</p>
+                            }
+
+                            <p><strong>Posted:</strong> @Model.PostedAt.ToString("dd MMM yyyy")</p>
+
+                            @if (Model.Deadline.HasValue)
+                            {
+                                <p><strong>Deadline:</strong> @Model.Deadline.Value.ToString("dd MMM yyyy")</p>
+                            }
+
+                            <p>
+                                <strong>Status:</strong>
+                                @if (Model.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Closed</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

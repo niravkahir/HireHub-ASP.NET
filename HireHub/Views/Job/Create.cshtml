@@ -1,0 +1,84 @@
+﻿@model HireHub.Models.Entities.Job
+@{
+    ViewData["Title"] = "Post a Job";
+}
+
+<div class="container mt-4">
+    <h2>Post a New Job</h2>
+    <hr />
+
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">Job Title *</label>
+                    <input asp-for="Title" class="form-control" placeholder="e.g. Senior .NET Developer" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Description *</label>
+                    <textarea asp-for="Description" class="form-control" rows="5"
+                              placeholder="Describe the role, responsibilities, and what you're looking for..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Requirements" class="form-label">Requirements (optional)</label>
+                    <textarea asp-for="Requirements" class="form-control" rows="4"
+                              placeholder="List skills, education, certifications..."></textarea>
+                    <span asp-validation-for="Requirements" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Location" class="form-label">Location *</label>
+                    <input asp-for="Location" class="form-control" placeholder="e.g. Mumbai, India" />
+                    <span asp-validation-for="Location" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label asp-for="JobType" class="form-label">Job Type *</label>
+                    <select asp-for="JobType" class="form-select"
+                            asp-items="Html.GetEnumSelectList<HireHub.Models.Enums.JobType>()"></select>
+                    <span asp-validation-for="JobType" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ExperienceLevel" class="form-label">Experience *</label>
+                    <select asp-for="ExperienceLevel" class="form-select"
+                            asp-items="Html.GetEnumSelectList<HireHub.Models.Enums.ExperienceLevel>()"></select>
+                    <span asp-validation-for="ExperienceLevel" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SalaryMin" class="form-label">Salary Min (₹)</label>
+                    <input asp-for="SalaryMin" class="form-control" type="number" min="0" step="0.01" />
+                    <span asp-validation-for="SalaryMin" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SalaryMax" class="form-label">Salary Max (₹)</label>
+                    <input asp-for="SalaryMax" class="form-control" type="number" min="0" step="0.01" />
+                    <span asp-validation-for="SalaryMax" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Deadline" class="form-label">Application Deadline</label>
+                    <input asp-for="Deadline" class="form-control" type="date" />
+                    <span asp-validation-for="Deadline" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Post Job</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
