@@ -2,6 +2,7 @@
 using HireHub.Models.Entities;
 using HireHub.Models.Enums;
 using HireHub.Models.ViewModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace HireHub.Controllers
     public class BrowseController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public BrowseController(ApplicationDbContext db)
+        public BrowseController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         // GET: /Browse
@@ -24,10 +27,9 @@ namespace HireHub.Controllers
         {
             var query = _db.Jobs
                 .Include(j => j.Company)
-                .Where(j => j.IsActive)  // only show active jobs
+                .Where(j => j.IsActive)
                 .AsQueryable();
 
-            // Apply filters
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(j =>
@@ -55,7 +57,6 @@ namespace HireHub.Controllers
                 .OrderByDescending(j => j.PostedAt)
                 .ToListAsync();
 
-            // Build ViewModel
             var vm = new JobSearchViewModel
             {
                 Keyword = keyword,
@@ -65,7 +66,6 @@ namespace HireHub.Controllers
                 Results = jobs
             };
 
-            // For dropdowns
             ViewBag.JobTypes = new SelectList(Enum.GetValues(typeof(JobType)), jobType);
             ViewBag.ExperienceLevels = new SelectList(Enum.GetValues(typeof(ExperienceLevel)), experienceLevel);
 
@@ -80,6 +80,31 @@ namespace HireHub.Controllers
                 .FirstOrDefaultAsync(j => j.Id == id && j.IsActive);
 
             if (job == null) return NotFound();
+
+            // 🔍 Check if current user has already applied
+            bool alreadyApplied = false;
+            bool isJobSeeker = User.Identity != null
+                               && User.Identity.IsAuthenticated
+                               && User.IsInRole("JobSeeker");
+
+            if (isJobSeeker)
+            {
+                var userId = _userManager.GetUserId(User);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    var profile = await _db.JobSeekerProfiles
+                        .FirstOrDefaultAsync(p => p.UserId == userId);
+
+                    if (profile != null)
+                    {
+                        alreadyApplied = await _db.JobApplications
+                            .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
+                    }
+                }
+            }
+
+            ViewBag.AlreadyApplied = alreadyApplied;
+            ViewBag.IsJobSeeker = isJobSeeker;
 
             return View(job);
         }

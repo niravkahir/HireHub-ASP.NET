@@ -22,7 +22,16 @@
         <div class="alert alert-info">
             <h4>Recruiter Panel</h4>
             <p>Post jobs, manage company, and review applicants.</p>
-            <a href="#" class="btn btn-outline-info">Go to Recruiter</a>
+
+            <a asp-controller="Company" asp-action="Index" class="btn btn-outline-info me-2">
+                My Company
+            </a>
+            <a asp-controller="Job" asp-action="Index" class="btn btn-outline-info me-2">
+                My Jobs
+            </a>
+            <a asp-controller="Job" asp-action="Create" class="btn btn-outline-info">
+                Post a Job
+            </a>
         </div>
     }
     else if (ViewBag.Roles.Contains("JobSeeker"))
@@ -30,7 +39,13 @@
         <div class="alert alert-success">
             <h4>Job Seeker Panel</h4>
             <p>Browse jobs, apply, save for later, and track applications.</p>
-            <a href="#" class="btn btn-outline-success">Browse Jobs</a>
+
+            <a asp-controller="Browse" asp-action="Index" class="btn btn-outline-success me-2">
+                Browse Jobs
+            </a>
+            <a asp-controller="Application" asp-action="MyApplications" class="btn btn-outline-success">
+                My Applications
+            </a>
         </div>
     }
 </div>

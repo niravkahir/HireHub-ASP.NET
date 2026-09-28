@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "Apply for Job";
+    var job = ViewBag.Job as HireHub.Models.Entities.Job;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            @if (TempData["Info"] != null)
+            {
+                <div class="alert alert-info">@TempData["Info"]</div>
+            }
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h3>Applying for: @job?.Title</h3>
+                    <p class="text-muted mb-0">
+                        🏢 @job?.Company?.Name — 📍 @job?.Location
+                    </p>
+                </div>
+            </div>
+
+            <form asp-action="Apply" asp-route-id="@job?.Id" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">Cover Letter (optional)</label>
+                    <textarea name="coverLetter" class="form-control" rows="6"
+                              placeholder="Tell the recruiter why you're a great fit..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Resume (PDF/DOC)</label>
+                    <input type="file" name="resumeFile" class="form-control"
+                           accept=".pdf,.doc,.docx" />
+                    <small class="text-muted">Accepted: PDF, DOC, DOCX</small>
+                </div>
+
+                <button type="submit" class="btn btn-success">Submit Application</button>
+                <a asp-controller="Browse" asp-action="Details" asp-route-id="@job?.Id"
+                   class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>

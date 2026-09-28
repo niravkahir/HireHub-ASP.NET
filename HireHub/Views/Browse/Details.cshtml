@@ -6,6 +6,11 @@
 <div class="container mt-4">
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">← Back to Jobs</a>
 
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
+
     <div class="card shadow-sm">
         <div class="card-body">
             <div class="row">
@@ -49,11 +54,25 @@
 
                             <hr />
 
-                            @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("JobSeeker"))
+                            @if (ViewBag.IsJobSeeker == true)
                             {
-                                <a href="#" class="btn btn-success w-100 mb-2">Apply Now</a>
-                                <a href="#" class="btn btn-outline-secondary w-100">Save Job</a>
-                                <p class="text-muted small mt-2 text-center">Coming in 5.4 & 5.8</p>
+                                @if (ViewBag.AlreadyApplied == true)
+                                {
+                                    <div class="alert alert-success text-center mb-2">
+                                        ✅ You have already applied to this job.
+                                    </div>
+                                    <a asp-controller="Application" asp-action="MyApplications"
+                                       class="btn btn-outline-primary w-100">
+                                        View My Applications
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Application" asp-action="Apply" asp-route-id="@Model.Id"
+                                       class="btn btn-success w-100 mb-2">Apply Now</a>
+                                    <a href="#" class="btn btn-outline-secondary w-100">Save Job</a>
+                                    <p class="text-muted small mt-2 text-center">Save feature coming soon</p>
+                                }
                             }
                             else if (User.Identity != null && User.Identity.IsAuthenticated)
                             {

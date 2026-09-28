@@ -46,6 +46,15 @@
                                     <a class="nav-link text-dark" asp-controller="Job" asp-action="Index">My Jobs</a>
                                 </li>
                             }
+
+                            @if (User.IsInRole("JobSeeker"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Application" asp-action="MyApplications">
+                                        My Applications
+                                    </a>
+                                </li>
+                            }
                         }
                     </ul>
 

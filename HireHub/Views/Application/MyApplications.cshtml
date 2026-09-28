@@ -1,0 +1,87 @@
+﻿@model List<HireHub.Models.Entities.JobApplication>
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "My Applications";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">My Applications</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You haven't applied to any jobs yet.
+            <a asp-controller="Browse" asp-action="Index">Browse jobs</a>
+        </div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Job</th>
+                    <th>Company</th>
+                    <th>Applied On</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var app in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Browse" asp-action="Details" asp-route-id="@app.JobId"
+                               class="fw-bold text-decoration-none">
+                                @app.Job.Title
+                            </a>
+                        </td>
+                        <td>@app.Job.Company?.Name</td>
+                        <td>@app.AppliedAt.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @{
+                                var badgeClass = app.Status switch
+                                {
+                                    ApplicationStatus.Applied => "bg-secondary",
+                                    ApplicationStatus.UnderReview => "bg-warning text-dark",
+                                    ApplicationStatus.Shortlisted => "bg-info text-dark",
+                                    ApplicationStatus.InterviewScheduled => "bg-primary",
+                                    ApplicationStatus.Hired => "bg-success",
+                                    ApplicationStatus.Rejected => "bg-danger",
+                                    ApplicationStatus.Withdrawn => "bg-dark",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@app.Status</span>
+                        </td>
+                        <td>
+                            @if (app.Status != ApplicationStatus.Hired &&
+                                 app.Status != ApplicationStatus.Rejected &&
+                                 app.Status != ApplicationStatus.Withdrawn)
+                            {
+                                <form asp-action="Withdraw" asp-route-id="@app.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Withdraw this application?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Withdraw</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
