@@ -1,0 +1,82 @@
+﻿@model HireHub.Models.Entities.JobSeekerProfile
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">My Profile</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="row">
+        <!-- Read-only account info -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Account Information</h5>
+                    <hr />
+                    <p><strong>Name:</strong> @ViewBag.FullName</p>
+                    <p><strong>Email:</strong> @ViewBag.Email</p>
+                    <p><strong>Phone:</strong> @ViewBag.PhoneNumber</p>
+                    <p class="text-muted small mb-0">
+                        To change these, contact support or update in Account settings.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editable profile -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Job Seeker Profile</h5>
+                    <hr />
+
+                    <form asp-action="Index" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Phone" class="form-label">Contact Phone</label>
+                            <input asp-for="Phone" class="form-control"
+                                   placeholder="e.g. 9876543210" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Location" class="form-label">Location</label>
+                            <input asp-for="Location" class="form-control"
+                                   placeholder="e.g. Ahmedabad, Gujarat" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Education" class="form-label">Education</label>
+                            <textarea asp-for="Education" class="form-control" rows="3"
+                                      placeholder="e.g. B.Tech in Computer Engineering, XYZ University (2020-2024)"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Experience" class="form-label">Experience</label>
+                            <textarea asp-for="Experience" class="form-control" rows="3"
+                                      placeholder="e.g. 2 years as Backend Developer at ABC Corp"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Skills" class="form-label">Skills</label>
+                            <textarea asp-for="Skills" class="form-control" rows="3"
+                                      placeholder="e.g. C#, ASP.NET Core, SQL Server, Git, Docker"></textarea>
+                            <small class="text-muted">Separate skills with commas</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

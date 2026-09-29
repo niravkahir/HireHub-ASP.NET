@@ -1,55 +1,50 @@
 ﻿@model List<HireHub.Models.Entities.JobApplication>
 @using HireHub.Models.Enums
 @{
-    ViewData["Title"] = "My Applications";
+    ViewData["Title"] = "Applicants";
+    var job = ViewBag.Job as HireHub.Models.Entities.Job;
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4">My Applications</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>Applicants</h2>
+            <p class="text-muted mb-0">
+                Job: <strong>@job?.Title</strong> — @job?.Location
+            </p>
+        </div>
+        <a asp-controller="Job" asp-action="Index" class="btn btn-secondary">Back to My Jobs</a>
+    </div>
 
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
     }
-    @if (TempData["Info"] != null)
-    {
-        <div class="alert alert-info">@TempData["Info"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info">
-            You haven't applied to any jobs yet.
-            <a asp-controller="Browse" asp-action="Index">Browse jobs</a>
-        </div>
+        <div class="alert alert-info">No one has applied to this job yet.</div>
     }
     else
     {
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>Job</th>
-                    <th>Company</th>
-                    <th>Applied On</th>
+                    <th>Applicant</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Applied</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var app in Model)
                 {
                     <tr>
-                        <td>
-                            <a asp-controller="Browse" asp-action="Details" asp-route-id="@app.JobId"
-                               class="fw-bold text-decoration-none">
-                                @app.Job.Title
-                            </a>
-                        </td>
-                        <td>@app.Job.Company?.Name</td>
+                        <td class="fw-bold">@app.JobSeekerProfile.User.FullName</td>
+                        <td>@app.JobSeekerProfile.User.Email</td>
+                        <td>@(app.JobSeekerProfile.User.PhoneNumber ?? "—")</td>
                         <td>@app.AppliedAt.ToString("dd MMM yyyy")</td>
                         <td>
                             @{
@@ -61,21 +56,15 @@
                                     ApplicationStatus.InterviewScheduled => "bg-primary",
                                     ApplicationStatus.Hired => "bg-success",
                                     ApplicationStatus.Rejected => "bg-danger",
+                                    ApplicationStatus.Withdrawn => "bg-dark",
                                     _ => "bg-secondary"
                                 };
                             }
                             <span class="badge @badgeClass">@app.Status</span>
                         </td>
                         <td>
-                            @if (app.Status != ApplicationStatus.Hired &&
-                                 app.Status != ApplicationStatus.Rejected)
-                            {
-                                <form asp-action="Withdraw" asp-route-id="@app.Id" method="post" class="d-inline"
-                                      onsubmit="return confirm('Withdraw this application?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Withdraw</button>
-                                </form>
-                            }
+                            <a asp-action="ApplicantDetails" asp-route-id="@app.Id"
+                               class="btn btn-sm btn-primary">View</a>
                         </td>
                     </tr>
                 }

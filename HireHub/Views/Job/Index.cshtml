@@ -63,6 +63,9 @@
                             }
                         </td>
                         <td>
+                            <a asp-controller="Application" asp-action="JobApplications" asp-route-id="@job.Id"
+                               class="btn btn-sm btn-success">Applicants</a>
+
                             <a asp-action="Edit" asp-route-id="@job.Id" class="btn btn-sm btn-warning">Edit</a>
 
                             <form asp-action="ToggleStatus" asp-route-id="@job.Id" method="post" class="d-inline">

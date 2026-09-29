@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HireHub.Controllers
 {
-    [Authorize(Roles = "JobSeeker")]
     public class ApplicationController : Controller
     {
         private readonly ApplicationDbContext _db;
@@ -25,8 +24,12 @@ namespace HireHub.Controllers
             _env = env;
         }
 
+        // ============================================
+        // HELPERS
+        // ============================================
+
         // Helper: get current job seeker's profile (auto-create if missing)
-        private async Task<JobSeekerProfile?> GetMyProfileAsync()
+        private async Task<JobSeekerProfile?> GetMySeekerProfileAsync()
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId)) return null;
@@ -44,7 +47,25 @@ namespace HireHub.Controllers
             return profile;
         }
 
+        // Helper: get recruiter's company
+        private async Task<Company?> GetMyCompanyAsync()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return null;
+
+            var profile = await _db.RecruiterProfiles
+                .Include(r => r.Company)
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+
+            return profile?.Company;
+        }
+
+        // ============================================
+        // JOB SEEKER ACTIONS
+        // ============================================
+
         // GET: /Application/Apply/5
+        [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> Apply(int id)
         {
             var job = await _db.Jobs
@@ -53,12 +74,14 @@ namespace HireHub.Controllers
 
             if (job == null) return NotFound();
 
-            var profile = await GetMyProfileAsync();
+            var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
-            // Check for duplicate
+            // ✅ Check for ACTIVE applications only (withdrawn doesn't block)
             var alreadyApplied = await _db.JobApplications
-                .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
+                .AnyAsync(a => a.JobId == id
+                    && a.JobSeekerProfileId == profile.Id
+                    && a.Status != ApplicationStatus.Withdrawn);
 
             if (alreadyApplied)
             {
@@ -73,6 +96,7 @@ namespace HireHub.Controllers
         // POST: /Application/Apply/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> Apply(int id, string? coverLetter, IFormFile? resumeFile)
         {
             var job = await _db.Jobs
@@ -81,12 +105,14 @@ namespace HireHub.Controllers
 
             if (job == null) return NotFound();
 
-            var profile = await GetMyProfileAsync();
+            var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
-            // Duplicate check again
+            // ✅ Check for ACTIVE applications only
             var alreadyApplied = await _db.JobApplications
-                .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
+                .AnyAsync(a => a.JobId == id
+                    && a.JobSeekerProfileId == profile.Id
+                    && a.Status != ApplicationStatus.Withdrawn);
 
             if (alreadyApplied)
             {
@@ -94,7 +120,6 @@ namespace HireHub.Controllers
                 return RedirectToAction("Details", "Browse", new { id });
             }
 
-            // Handle resume upload
             string? resumePath = null;
             if (resumeFile != null && resumeFile.Length > 0)
             {
@@ -129,15 +154,19 @@ namespace HireHub.Controllers
         }
 
         // GET: /Application/MyApplications
+        [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> MyApplications()
         {
-            var profile = await GetMyProfileAsync();
+            var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
+            // ✅ HIDE WITHDRAWN APPLICATIONS
             var apps = await _db.JobApplications
                 .Include(a => a.Job)
                     .ThenInclude(j => j.Company)
-                .Where(a => a.JobSeekerProfileId == profile.Id)
+                .Include(a => a.Interview)
+                .Where(a => a.JobSeekerProfileId == profile.Id
+                    && a.Status != ApplicationStatus.Withdrawn)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
@@ -147,9 +176,10 @@ namespace HireHub.Controllers
         // POST: /Application/Withdraw/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> Withdraw(int id)
         {
-            var profile = await GetMyProfileAsync();
+            var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
             var app = await _db.JobApplications
@@ -157,7 +187,6 @@ namespace HireHub.Controllers
 
             if (app == null) return NotFound();
 
-            // Only allow withdraw if not yet hired / rejected
             if (app.Status == ApplicationStatus.Hired ||
                 app.Status == ApplicationStatus.Rejected)
             {
@@ -171,6 +200,90 @@ namespace HireHub.Controllers
 
             TempData["Success"] = "Application withdrawn.";
             return RedirectToAction(nameof(MyApplications));
+        }
+
+        // ============================================
+        // RECRUITER ACTIONS
+        // ============================================
+
+        // GET: /Application/JobApplications/5
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> JobApplications(int id)
+        {
+            var company = await GetMyCompanyAsync();
+            if (company == null)
+            {
+                TempData["Info"] = "Please create your company first.";
+                return RedirectToAction("Create", "Company");
+            }
+
+            var job = await _db.Jobs
+                .FirstOrDefaultAsync(j => j.Id == id && j.CompanyId == company.Id);
+
+            if (job == null) return NotFound();
+
+            // ✅ ONLY SHOW NON-WITHDRAWN APPLICATIONS
+            var applications = await _db.JobApplications
+                .Include(a => a.JobSeekerProfile)
+                    .ThenInclude(p => p.User)
+                .Where(a => a.JobId == id
+                    && a.Status != ApplicationStatus.Withdrawn)
+                .OrderByDescending(a => a.AppliedAt)
+                .ToListAsync();
+
+            ViewBag.Job = job;
+            return View(applications);
+        }
+
+        // GET: /Application/ApplicantDetails/5
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> ApplicantDetails(int id)
+        {
+            var company = await GetMyCompanyAsync();
+            if (company == null)
+            {
+                TempData["Info"] = "Please create your company first.";
+                return RedirectToAction("Create", "Company");
+            }
+
+            // ✅ BLOCK WITHDRAWN APPLICATIONS
+            var application = await _db.JobApplications
+                .Include(a => a.Job)
+                .Include(a => a.JobSeekerProfile)
+                    .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(a => a.Id == id
+                    && a.Job.CompanyId == company.Id
+                    && a.Status != ApplicationStatus.Withdrawn);
+
+            if (application == null) return NotFound();
+
+            return View(application);
+        }
+
+        // POST: /Application/UpdateStatus
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> UpdateStatus(int id, ApplicationStatus status)
+        {
+            var company = await GetMyCompanyAsync();
+            if (company == null) return RedirectToAction("Create", "Company");
+
+            // ✅ BLOCK WITHDRAWN
+            var application = await _db.JobApplications
+                .Include(a => a.Job)
+                .FirstOrDefaultAsync(a => a.Id == id
+                    && a.Job.CompanyId == company.Id
+                    && a.Status != ApplicationStatus.Withdrawn);
+
+            if (application == null) return NotFound();
+
+            application.Status = status;
+            application.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = $"Status updated to {status}.";
+            return RedirectToAction(nameof(ApplicantDetails), new { id });
         }
     }
 }

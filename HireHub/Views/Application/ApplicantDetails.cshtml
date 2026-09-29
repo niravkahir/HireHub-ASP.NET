@@ -1,0 +1,104 @@
+﻿@model HireHub.Models.Entities.JobApplication
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "Applicant Details";
+    var applicant = Model.JobSeekerProfile.User;
+}
+
+<div class="container mt-4">
+    <a asp-action="JobApplications" asp-route-id="@Model.JobId"
+       class="btn btn-sm btn-outline-secondary mb-3">← Back to Applicants</a>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="row">
+        <!-- Left: Applicant Info -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h3>@applicant.FullName</h3>
+                    <p class="text-muted mb-2">
+                        Applied for: <strong>@Model.Job.Title</strong>
+                    </p>
+
+                    <ul class="list-unstyled">
+                        <li>📧 <strong>Email:</strong> @applicant.Email</li>
+                        <li>📞 <strong>Phone:</strong> @(applicant.PhoneNumber ?? "—")</li>
+                        <li>📍 <strong>Location:</strong> @(Model.JobSeekerProfile.Location ?? "—")</li>
+                        <li>🎓 <strong>Education:</strong> @(Model.JobSeekerProfile.Education ?? "—")</li>
+                        <li>💼 <strong>Experience:</strong> @(Model.JobSeekerProfile.Experience ?? "—")</li>
+                        <li>🛠️ <strong>Skills:</strong> @(Model.JobSeekerProfile.Skills ?? "—")</li>
+                        <li>📅 <strong>Applied On:</strong> @Model.AppliedAt.ToString("dd MMM yyyy HH:mm")</li>
+                    </ul>
+
+                    @if (!string.IsNullOrEmpty(Model.ResumePath))
+                    {
+                        <a href="@Model.ResumePath" target="_blank" class="btn btn-outline-primary">
+                            📄 View Resume
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No resume uploaded.</span>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.CoverLetter))
+            {
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>Cover Letter</h5>
+                        <p class="mb-0" style="white-space: pre-wrap;">@Model.CoverLetter</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right: Status Update -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Application Status</h5>
+
+                    <p class="mb-2">
+                        Current:
+                        @{
+                            var badgeClass = Model.Status switch
+                            {
+                                ApplicationStatus.Applied => "bg-secondary",
+                                ApplicationStatus.UnderReview => "bg-warning text-dark",
+                                ApplicationStatus.Shortlisted => "bg-info text-dark",
+                                ApplicationStatus.InterviewScheduled => "bg-primary",
+                                ApplicationStatus.Hired => "bg-success",
+                                ApplicationStatus.Rejected => "bg-danger",
+                                ApplicationStatus.Withdrawn => "bg-dark",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@Model.Status</span>
+                    </p>
+
+                    <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <label class="form-label">Update to:</label>
+                        <select name="status" class="form-select mb-2">
+                            <option value="1">Applied</option>
+                            <option value="2">Under Review</option>
+                            <option value="3">Shortlisted</option>
+                            <option value="4">Interview Scheduled</option>
+                            <option value="5">Rejected</option>
+                            <option value="6">Hired</option>
+                        </select>
+
+                        <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
