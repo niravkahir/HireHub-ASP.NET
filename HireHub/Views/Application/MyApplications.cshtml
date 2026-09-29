@@ -15,10 +15,6 @@
     {
         <div class="alert alert-info">@TempData["Info"]</div>
     }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
 
     @if (!Model.Any())
     {
@@ -36,7 +32,7 @@
                     <th>Company</th>
                     <th>Applied On</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th>Interview</th>
                 </tr>
             </thead>
             <tbody>
@@ -67,14 +63,26 @@
                             <span class="badge @badgeClass">@app.Status</span>
                         </td>
                         <td>
-                            @if (app.Status != ApplicationStatus.Hired &&
-                                 app.Status != ApplicationStatus.Rejected)
+                            @if (app.Interview != null)
                             {
-                                <form asp-action="Withdraw" asp-route-id="@app.Id" method="post" class="d-inline"
-                                      onsubmit="return confirm('Withdraw this application?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Withdraw</button>
-                                </form>
+                                <div class="small">
+                                    <div><strong>@app.Interview.ScheduledAt.ToString("dd MMM yyyy HH:mm")</strong></div>
+                                    <div class="text-muted">@app.Interview.Mode</div>
+
+                                    @if (!string.IsNullOrEmpty(app.Interview.Location))
+                                    {
+                                        <div>
+                                            <a href="@app.Interview.Location" target="_blank"
+                                               class="text-decoration-none">
+                                                @(app.Interview.Mode == "Online" ? "Join Meeting" : "View Location")
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Not scheduled</span>
                             }
                         </td>
                     </tr>

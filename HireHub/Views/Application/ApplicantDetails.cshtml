@@ -13,6 +13,10 @@
     {
         <div class="alert alert-success">@TempData["Success"]</div>
     }
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
 
     <div class="row">
         <!-- Left: Applicant Info -->
@@ -58,9 +62,9 @@
             }
         </div>
 
-        <!-- Right: Status Update -->
+        <!-- Right: Status Update + Interview -->
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm mb-3">
                 <div class="card-body">
                     <h5>Application Status</h5>
 
@@ -75,7 +79,6 @@
                                 ApplicationStatus.InterviewScheduled => "bg-primary",
                                 ApplicationStatus.Hired => "bg-success",
                                 ApplicationStatus.Rejected => "bg-danger",
-                                ApplicationStatus.Withdrawn => "bg-dark",
                                 _ => "bg-secondary"
                             };
                         }
@@ -97,6 +100,43 @@
 
                         <button type="submit" class="btn btn-primary w-100">Update Status</button>
                     </form>
+                </div>
+            </div>
+
+            <!-- Interview Section -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Interview</h5>
+
+                    @if (Model.Interview != null)
+                    {
+                        <p><strong>📅 Date:</strong> @Model.Interview.ScheduledAt.ToString("dd MMM yyyy HH:mm")</p>
+                        <p><strong>💻 Mode:</strong> @Model.Interview.Mode</p>
+
+                        @if (!string.IsNullOrEmpty(Model.Interview.Location))
+                        {
+                            <p><strong>📍 Location:</strong> @Model.Interview.Location</p>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.Interview.Notes))
+                        {
+                            <p><strong>📝 Notes:</strong> @Model.Interview.Notes</p>
+                        }
+
+                        <a asp-controller="Interview" asp-action="Schedule" asp-route-id="@Model.Id"
+                           class="btn btn-outline-primary w-100">
+                            Edit Interview
+                        </a>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No interview scheduled yet.</p>
+
+                        <a asp-controller="Interview" asp-action="Schedule" asp-route-id="@Model.Id"
+                           class="btn btn-success w-100">
+                            📅 Schedule Interview
+                        </a>
+                    }
                 </div>
             </div>
         </div>
