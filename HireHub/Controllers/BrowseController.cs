@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HireHub.Controllers
 {
-    // Public controller — anyone can browse jobs
     public class BrowseController : Controller
     {
         private readonly ApplicationDbContext _db;
@@ -21,7 +20,7 @@ namespace HireHub.Controllers
             _userManager = userManager;
         }
 
-        // GET: /Browse
+        // GET: /Browse  (unchanged from before)
         public async Task<IActionResult> Index(string? keyword, string? location,
             JobType? jobType, ExperienceLevel? experienceLevel)
         {
@@ -39,19 +38,13 @@ namespace HireHub.Controllers
             }
 
             if (!string.IsNullOrWhiteSpace(location))
-            {
                 query = query.Where(j => j.Location != null && j.Location.Contains(location));
-            }
 
             if (jobType.HasValue)
-            {
                 query = query.Where(j => j.JobType == jobType.Value);
-            }
 
             if (experienceLevel.HasValue)
-            {
                 query = query.Where(j => j.ExperienceLevel == experienceLevel.Value);
-            }
 
             var jobs = await query
                 .OrderByDescending(j => j.PostedAt)
@@ -77,12 +70,19 @@ namespace HireHub.Controllers
         {
             var job = await _db.Jobs
                 .Include(j => j.Company)
-                .FirstOrDefaultAsync(j => j.Id == id && j.IsActive);
+                .FirstOrDefaultAsync(j => j.Id == id);
 
             if (job == null) return NotFound();
 
-            // 🔍 Check if current user has already applied
+            // Job closed → show Closed page
+            if (!job.IsActive)
+            {
+                ViewBag.Job = job;
+                return View("Closed");
+            }
+
             bool alreadyApplied = false;
+            bool isSaved = false;
             bool isJobSeeker = User.Identity != null
                                && User.Identity.IsAuthenticated
                                && User.IsInRole("JobSeeker");
@@ -98,12 +98,18 @@ namespace HireHub.Controllers
                     if (profile != null)
                     {
                         alreadyApplied = await _db.JobApplications
-                            .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
+                            .AnyAsync(a => a.JobId == id
+                                && a.JobSeekerProfileId == profile.Id
+                                && a.Status != ApplicationStatus.Withdrawn);
+
+                        isSaved = await _db.SavedJobs
+                            .AnyAsync(s => s.JobId == id && s.JobSeekerProfileId == profile.Id);
                     }
                 }
             }
 
             ViewBag.AlreadyApplied = alreadyApplied;
+            ViewBag.IsSaved = isSaved;
             ViewBag.IsJobSeeker = isJobSeeker;
 
             return View(job);

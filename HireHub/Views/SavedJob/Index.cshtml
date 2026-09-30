@@ -1,0 +1,77 @@
+﻿@model List<HireHub.Models.Entities.SavedJob>
+@{
+    ViewData["Title"] = "My Saved Jobs";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">My Saved Jobs</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You haven't saved any jobs yet. Browse jobs and click <strong>Save Job</strong>.
+            <a asp-controller="Browse" asp-action="Index" class="ms-2">Browse Jobs →</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var saved in Model)
+            {
+                var job = saved.Job;
+                <div class="col-md-6 mb-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="mb-1">
+                                    <a asp-controller="Browse" asp-action="Details" asp-route-id="@job.Id"
+                                       class="text-decoration-none fw-bold">
+                                        @job.Title
+                                    </a>
+                                </h5>
+                                <span class="badge bg-primary">@job.JobType</span>
+                            </div>
+
+                            <p class="text-muted mb-1">
+                                🏢 @job.Company?.Name — 📍 @job.Location
+                            </p>
+
+                            <p class="text-truncate mb-2">@job.Description</p>
+
+                            @if (job.SalaryMin.HasValue && job.SalaryMax.HasValue)
+                            {
+                                <p class="mb-2 small">
+                                    💰 @job.SalaryMin - @job.SalaryMax
+                                </p>
+                            }
+
+                            <p class="text-muted small mb-3">
+                                Saved on @saved.SavedAt.ToString("dd MMM yyyy")
+                            </p>
+
+                            <div class="d-flex gap-2">
+                                <a asp-controller="Browse" asp-action="Details" asp-route-id="@job.Id"
+                                   class="btn btn-sm btn-outline-primary">View</a>
+
+                                <form asp-action="UnsaveFromList" asp-route-id="@saved.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Remove this saved job?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

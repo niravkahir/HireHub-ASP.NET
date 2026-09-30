@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "Job Closed";
+    var job = ViewBag.Job as HireHub.Models.Entities.Job;
+}
+
+<div class="container mt-5">
+    <div class="text-center py-5">
+        <div style="font-size: 80px;">😔</div>
+
+        <h1 class="display-4 mt-3">Oops! This job is closed</h1>
+
+        <p class="lead text-muted mt-3">
+            The recruiter is no longer accepting applications for this position.
+        </p>
+
+        @if (job != null)
+        {
+            <div class="card mx-auto mt-4 shadow-sm" style="max-width: 500px;">
+                <div class="card-body">
+                    <h5>@job.Title</h5>
+                    <p class="text-muted mb-1">
+                        🏢 @job.Company?.Name — 📍 @job.Location
+                    </p>
+                    <p class="text-muted small mb-0">
+                        Closed on @job.PostedAt.ToString("dd MMM yyyy")
+                    </p>
+                </div>
+            </div>
+        }
+
+        <div class="mt-4">
+            <a asp-action="Index" class="btn btn-primary btn-lg me-2">
+                Browse Other Jobs
+            </a>
+            <a asp-controller="Application" asp-action="MyApplications"
+               class="btn btn-outline-secondary btn-lg">
+                My Applications
+            </a>
+        </div>
+    </div>
+</div>

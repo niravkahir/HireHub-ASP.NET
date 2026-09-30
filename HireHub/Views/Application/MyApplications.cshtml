@@ -15,6 +15,10 @@
     {
         <div class="alert alert-info">@TempData["Info"]</div>
     }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
 
     @if (!Model.Any())
     {
@@ -25,14 +29,18 @@
     }
     else
     {
+        <p class="text-muted">Total: <strong>@Model.Count</strong> application(s)</p>
+
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
                     <th>Job</th>
                     <th>Company</th>
                     <th>Applied On</th>
+                    <th>Last Update</th>
                     <th>Status</th>
                     <th>Interview</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,6 +55,16 @@
                         </td>
                         <td>@app.Job.Company?.Name</td>
                         <td>@app.AppliedAt.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @if (app.UpdatedAt.HasValue)
+                            {
+                                <span class="text-muted small">@app.UpdatedAt.Value.ToString("dd MMM yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
                         <td>
                             @{
                                 var badgeClass = app.Status switch
@@ -66,23 +84,77 @@
                             @if (app.Interview != null)
                             {
                                 <div class="small">
-                                    <div><strong>@app.Interview.ScheduledAt.ToString("dd MMM yyyy HH:mm")</strong></div>
-                                    <div class="text-muted">@app.Interview.Mode</div>
+                                    <div><strong>📅 @app.Interview.ScheduledAt.ToString("dd MMM yyyy HH:mm")</strong></div>
+                                    <div class="text-muted">💻 @app.Interview.Mode</div>
 
-                                    @if (!string.IsNullOrEmpty(app.Interview.Location))
-                                    {
-                                        <div>
-                                            <a href="@app.Interview.Location" target="_blank"
-                                               class="text-decoration-none">
-                                                @(app.Interview.Mode == "Online" ? "Join Meeting" : "View Location")
-                                            </a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-1"
+                                            data-bs-toggle="modal" data-bs-target="#interviewModal-@app.Id">
+                                        View Details
+                                    </button>
+                                </div>
+
+                                <!-- Interview Modal -->
+                                <div class="modal fade" id="interviewModal-@app.Id" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Interview Details</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Job:</strong> @app.Job.Title</p>
+                                                <p><strong>Company:</strong> @app.Job.Company?.Name</p>
+                                                <hr />
+                                                <p><strong>📅 Date & Time:</strong> @app.Interview.ScheduledAt.ToString("dddd, dd MMM yyyy HH:mm")</p>
+                                                <p><strong>💻 Mode:</strong> @app.Interview.Mode</p>
+
+                                                @if (!string.IsNullOrEmpty(app.Interview.Location))
+                                                {
+                                                    <p class="mb-1"><strong>📍 Location / Link:</strong></p>
+                                                    @if (app.Interview.Mode == "Online" && app.Interview.Location.StartsWith("http"))
+                                                    {
+                                                        <a href="@app.Interview.Location" target="_blank" class="btn btn-primary btn-sm">
+                                                            🔗 Join Meeting
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p class="text-muted mb-0">@app.Interview.Location</p>
+                                                    }
+                                                }
+
+                                                @if (!string.IsNullOrEmpty(app.Interview.Notes))
+                                                {
+                                                    <hr />
+                                                    <p class="mb-1"><strong>📝 Notes from Recruiter:</strong></p>
+                                                    <p class="text-muted" style="white-space: pre-wrap;">@app.Interview.Notes</p>
+                                                }
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
                                         </div>
-                                    }
+                                    </div>
                                 </div>
                             }
                             else
                             {
                                 <span class="text-muted small">Not scheduled</span>
+                            }
+                        </td>
+                        <td>
+                            @if (app.Status != ApplicationStatus.Hired &&
+                                 app.Status != ApplicationStatus.Rejected)
+                            {
+                                <form asp-action="Withdraw" asp-route-id="@app.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Withdraw this application? This cannot be undone.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Withdraw</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
                             }
                         </td>
                     </tr>

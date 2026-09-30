@@ -62,7 +62,7 @@
             }
         </div>
 
-        <!-- Right: Status Update + Interview -->
+        <!-- Right: Status + Interview -->
         <div class="col-md-4">
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
@@ -93,9 +93,9 @@
                             <option value="1">Applied</option>
                             <option value="2">Under Review</option>
                             <option value="3">Shortlisted</option>
-                            <option value="4">Interview Scheduled</option>
                             <option value="5">Rejected</option>
                             <option value="6">Hired</option>
+                            @* Note: InterviewScheduled (4) can only be set via Schedule Interview button *@
                         </select>
 
                         <button type="submit" class="btn btn-primary w-100">Update Status</button>
@@ -110,21 +110,21 @@
 
                     @if (Model.Interview != null)
                     {
-                        <p><strong>📅 Date:</strong> @Model.Interview.ScheduledAt.ToString("dd MMM yyyy HH:mm")</p>
-                        <p><strong>💻 Mode:</strong> @Model.Interview.Mode</p>
+                        <p class="mb-1"><strong>📅 @Model.Interview.ScheduledAt.ToString("dd MMM yyyy HH:mm")</strong></p>
+                        <p class="mb-1"><strong>💻 Mode:</strong> @Model.Interview.Mode</p>
 
                         @if (!string.IsNullOrEmpty(Model.Interview.Location))
                         {
-                            <p><strong>📍 Location:</strong> @Model.Interview.Location</p>
+                            <p class="mb-1"><strong>📍 Location:</strong> @Model.Interview.Location</p>
                         }
 
                         @if (!string.IsNullOrEmpty(Model.Interview.Notes))
                         {
-                            <p><strong>📝 Notes:</strong> @Model.Interview.Notes</p>
+                            <p class="mb-1"><strong>📝 Notes:</strong> @Model.Interview.Notes</p>
                         }
 
                         <a asp-controller="Interview" asp-action="Schedule" asp-route-id="@Model.Id"
-                           class="btn btn-outline-primary w-100">
+                           class="btn btn-outline-primary w-100 mt-2">
                             Edit Interview
                         </a>
                     }

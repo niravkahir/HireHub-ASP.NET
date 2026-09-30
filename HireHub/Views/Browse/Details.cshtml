@@ -6,6 +6,10 @@
 <div class="container mt-4">
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">← Back to Jobs</a>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
     @if (TempData["Info"] != null)
     {
         <div class="alert alert-info">@TempData["Info"]</div>
@@ -62,7 +66,7 @@
                                         ✅ You have already applied to this job.
                                     </div>
                                     <a asp-controller="Application" asp-action="MyApplications"
-                                       class="btn btn-outline-primary w-100">
+                                       class="btn btn-outline-primary w-100 mb-2">
                                         View My Applications
                                     </a>
                                 }
@@ -70,14 +74,34 @@
                                 {
                                     <a asp-controller="Application" asp-action="Apply" asp-route-id="@Model.Id"
                                        class="btn btn-success w-100 mb-2">Apply Now</a>
-                                    <a href="#" class="btn btn-outline-secondary w-100">Save Job</a>
-                                    <p class="text-muted small mt-2 text-center">Save feature coming soon</p>
+                                }
+
+                                @* ===== SAVE / UNSAVE BUTTON ===== *@
+                                @if (ViewBag.IsSaved == true)
+                                {
+                                    <form asp-controller="SavedJob" asp-action="Unsave" asp-route-id="@Model.Id"
+                                          method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger w-100">
+                                            ⭐ Unsave Job
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-controller="SavedJob" asp-action="Save" asp-route-id="@Model.Id"
+                                          method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-secondary w-100">
+                                            ☆ Save Job
+                                        </button>
+                                    </form>
                                 }
                             }
                             else if (User.Identity != null && User.Identity.IsAuthenticated)
                             {
                                 <p class="text-muted small text-center mb-0">
-                                    Only Job Seekers can apply.
+                                    Only Job Seekers can apply or save.
                                 </p>
                             }
                             else

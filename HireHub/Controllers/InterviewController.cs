@@ -32,7 +32,7 @@ namespace HireHub.Controllers
             return profile?.Company;
         }
 
-        // GET: /Interview/Schedule/8   (8 = application ID)
+        // GET: /Interview/Schedule/8
         public async Task<IActionResult> Schedule(int id)
         {
             var company = await GetMyCompanyAsync();
@@ -54,15 +54,13 @@ namespace HireHub.Controllers
             ViewBag.Application = application;
 
             if (application.Interview != null)
-            {
                 return View(application.Interview);
-            }
 
-            // New interview — default tomorrow 10 AM
             return View(new Interview
             {
                 JobApplicationId = id,
-                ScheduledAt = DateTime.Today.AddDays(1).AddHours(10)
+                ScheduledAt = DateTime.Today.AddDays(1).AddHours(10),
+                Mode = "Online"
             });
         }
 
@@ -71,21 +69,6 @@ namespace HireHub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Schedule(int id, Interview model)
         {
-            // === DEBUG ===
-            Console.WriteLine("===== Interview/Schedule POST =====");
-            Console.WriteLine($"Route id = {id}");
-            Console.WriteLine($"Model.JobApplicationId = {model.JobApplicationId}");
-            Console.WriteLine($"Model.ScheduledAt = {model.ScheduledAt}");
-            Console.WriteLine($"ModelState.IsValid = {ModelState.IsValid}");
-
-            foreach (var kv in ModelState)
-            {
-                foreach (var err in kv.Value.Errors)
-                {
-                    Console.WriteLine($"  ERROR {kv.Key}: {err.ErrorMessage}");
-                }
-            }
-
             // Remove validation errors for navigation properties
             ModelState.Remove("JobApplication");
             ModelState.Remove("CreatedAt");
@@ -102,7 +85,7 @@ namespace HireHub.Controllers
 
             if (application == null) return NotFound();
 
-            // Date validation — use local time
+            // Future date check
             if (model.ScheduledAt < DateTime.Now.AddMinutes(-5))
             {
                 ModelState.AddModelError("ScheduledAt", "Interview must be scheduled for a future date/time.");
@@ -114,13 +97,17 @@ namespace HireHub.Controllers
                 return View(model);
             }
 
+            // ============================================
+            // CREATE OR UPDATE INTERVIEW
+            // ============================================
             if (application.Interview == null)
             {
+                // CASE 1: No interview yet → create new
                 var interview = new Interview
                 {
                     JobApplicationId = application.Id,
                     ScheduledAt = model.ScheduledAt,
-                    Mode = model.Mode,
+                    Mode = string.IsNullOrEmpty(model.Mode) ? "Online" : model.Mode,
                     Location = model.Location,
                     Notes = model.Notes,
                     CreatedAt = DateTime.UtcNow
@@ -129,18 +116,22 @@ namespace HireHub.Controllers
             }
             else
             {
+                // CASE 2: Interview already exists → update it
                 application.Interview.ScheduledAt = model.ScheduledAt;
-                application.Interview.Mode = model.Mode;
+                application.Interview.Mode = string.IsNullOrEmpty(model.Mode) ? "Online" : model.Mode;
                 application.Interview.Location = model.Location;
                 application.Interview.Notes = model.Notes;
             }
 
+            // ============================================
+            // AUTO-UPDATE STATUS
+            // ============================================
             application.Status = ApplicationStatus.InterviewScheduled;
             application.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
 
-            TempData["Success"] = "Interview scheduled successfully!";
+            TempData["Success"] = "Interview scheduled! Status updated to 'Interview Scheduled'.";
             return RedirectToAction("ApplicantDetails", "Application", new { id = application.Id });
         }
 
@@ -162,12 +153,13 @@ namespace HireHub.Controllers
 
             _db.Interviews.Remove(application.Interview);
 
+            // Reset status to Shortlisted
             application.Status = ApplicationStatus.Shortlisted;
             application.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
 
-            TempData["Success"] = "Interview cancelled.";
+            TempData["Success"] = "Interview cancelled. Status reverted to 'Shortlisted'.";
             return RedirectToAction("ApplicantDetails", "Application", new { id = application.Id });
         }
     }

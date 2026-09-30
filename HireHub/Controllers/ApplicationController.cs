@@ -28,7 +28,6 @@ namespace HireHub.Controllers
         // HELPERS
         // ============================================
 
-        // Helper: get current job seeker's profile (auto-create if missing)
         private async Task<JobSeekerProfile?> GetMySeekerProfileAsync()
         {
             var userId = _userManager.GetUserId(User);
@@ -47,7 +46,6 @@ namespace HireHub.Controllers
             return profile;
         }
 
-        // Helper: get recruiter's company
         private async Task<Company?> GetMyCompanyAsync()
         {
             var userId = _userManager.GetUserId(User);
@@ -77,11 +75,8 @@ namespace HireHub.Controllers
             var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
-            // ✅ Check for ACTIVE applications only (withdrawn doesn't block)
             var alreadyApplied = await _db.JobApplications
-                .AnyAsync(a => a.JobId == id
-                    && a.JobSeekerProfileId == profile.Id
-                    && a.Status != ApplicationStatus.Withdrawn);
+                .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
 
             if (alreadyApplied)
             {
@@ -108,11 +103,8 @@ namespace HireHub.Controllers
             var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
-            // ✅ Check for ACTIVE applications only
             var alreadyApplied = await _db.JobApplications
-                .AnyAsync(a => a.JobId == id
-                    && a.JobSeekerProfileId == profile.Id
-                    && a.Status != ApplicationStatus.Withdrawn);
+                .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
 
             if (alreadyApplied)
             {
@@ -160,13 +152,11 @@ namespace HireHub.Controllers
             var profile = await GetMySeekerProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
-            // ✅ HIDE WITHDRAWN APPLICATIONS
             var apps = await _db.JobApplications
                 .Include(a => a.Job)
                     .ThenInclude(j => j.Company)
                 .Include(a => a.Interview)
-                .Where(a => a.JobSeekerProfileId == profile.Id
-                    && a.Status != ApplicationStatus.Withdrawn)
+                .Where(a => a.JobSeekerProfileId == profile.Id)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
@@ -183,6 +173,7 @@ namespace HireHub.Controllers
             if (profile == null) return RedirectToAction("Login", "Account");
 
             var app = await _db.JobApplications
+                .Include(a => a.Interview)
                 .FirstOrDefaultAsync(a => a.Id == id && a.JobSeekerProfileId == profile.Id);
 
             if (app == null) return NotFound();
@@ -190,15 +181,20 @@ namespace HireHub.Controllers
             if (app.Status == ApplicationStatus.Hired ||
                 app.Status == ApplicationStatus.Rejected)
             {
-                TempData["Error"] = "You cannot withdraw this application.";
+                TempData["Error"] = "You cannot withdraw a final application.";
                 return RedirectToAction(nameof(MyApplications));
             }
 
-            app.Status = ApplicationStatus.Withdrawn;
-            app.UpdatedAt = DateTime.UtcNow;
+            // Remove associated interview if exists
+            if (app.Interview != null)
+            {
+                _db.Interviews.Remove(app.Interview);
+            }
+
+            _db.JobApplications.Remove(app);
             await _db.SaveChangesAsync();
 
-            TempData["Success"] = "Application withdrawn.";
+            TempData["Success"] = "Application withdrawn successfully.";
             return RedirectToAction(nameof(MyApplications));
         }
 
@@ -222,12 +218,11 @@ namespace HireHub.Controllers
 
             if (job == null) return NotFound();
 
-            // ✅ ONLY SHOW NON-WITHDRAWN APPLICATIONS
             var applications = await _db.JobApplications
                 .Include(a => a.JobSeekerProfile)
                     .ThenInclude(p => p.User)
-                .Where(a => a.JobId == id
-                    && a.Status != ApplicationStatus.Withdrawn)
+                .Include(a => a.Interview)
+                .Where(a => a.JobId == id)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
@@ -246,14 +241,12 @@ namespace HireHub.Controllers
                 return RedirectToAction("Create", "Company");
             }
 
-            // ✅ BLOCK WITHDRAWN APPLICATIONS
             var application = await _db.JobApplications
                 .Include(a => a.Job)
                 .Include(a => a.JobSeekerProfile)
                     .ThenInclude(p => p.User)
-                .FirstOrDefaultAsync(a => a.Id == id
-                    && a.Job.CompanyId == company.Id
-                    && a.Status != ApplicationStatus.Withdrawn);
+                .Include(a => a.Interview)
+                .FirstOrDefaultAsync(a => a.Id == id && a.Job.CompanyId == company.Id);
 
             if (application == null) return NotFound();
 
@@ -269,14 +262,18 @@ namespace HireHub.Controllers
             var company = await GetMyCompanyAsync();
             if (company == null) return RedirectToAction("Create", "Company");
 
-            // ✅ BLOCK WITHDRAWN
             var application = await _db.JobApplications
                 .Include(a => a.Job)
-                .FirstOrDefaultAsync(a => a.Id == id
-                    && a.Job.CompanyId == company.Id
-                    && a.Status != ApplicationStatus.Withdrawn);
+                .FirstOrDefaultAsync(a => a.Id == id && a.Job.CompanyId == company.Id);
 
             if (application == null) return NotFound();
+
+            // Prevent manual InterviewScheduled — use Schedule Interview button
+            if (status == ApplicationStatus.InterviewScheduled)
+            {
+                TempData["Error"] = "Use 'Schedule Interview' to set this status.";
+                return RedirectToAction(nameof(ApplicantDetails), new { id });
+            }
 
             application.Status = status;
             application.UpdatedAt = DateTime.UtcNow;
