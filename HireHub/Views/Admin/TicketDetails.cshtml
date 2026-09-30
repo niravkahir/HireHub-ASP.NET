@@ -1,0 +1,127 @@
+﻿@model HireHub.Models.Entities.SupportTicket
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "Ticket #" + Model.Id;
+    bool isClosed = Model.Status == SupportStatus.Closed;
+}
+
+<div class="container mt-4">
+    <a asp-action="Tickets" class="btn btn-sm btn-outline-secondary mb-3">← Back to Tickets</a>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h3>@Model.Subject</h3>
+                        @{
+                            var badgeClass = Model.Status switch
+                            {
+                                SupportStatus.Open => "bg-success",
+                                SupportStatus.InProgress => "bg-warning text-dark",
+                                SupportStatus.Resolved => "bg-info text-dark",
+                                SupportStatus.Closed => "bg-secondary",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass fs-6">@Model.Status</span>
+                    </div>
+
+                    <p class="text-muted small mt-2">
+                        Ticket #@Model.Id • Opened @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                        @if (Model.UpdatedAt.HasValue)
+                        {
+                            <span>• Updated @Model.UpdatedAt.Value.ToString("dd MMM yyyy HH:mm")</span>
+                        }
+                    </p>
+
+                    <hr />
+
+                    <h5>From:</h5>
+                    <p>
+                        <strong>@Model.User.FullName</strong><br />
+                        <small class="text-muted">@Model.User.Email</small>
+                    </p>
+
+                    <h5>Message:</h5>
+                    <p style="white-space: pre-wrap;">@Model.Message</p>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.AdminReply))
+            {
+                <div class="card shadow-sm border-success mb-3">
+                    <div class="card-body">
+                        <h5 class="text-success">✅ Previous Reply</h5>
+                        <p class="text-muted small">Replied @Model.RepliedAt?.ToString("dd MMM yyyy HH:mm")</p>
+                        <p style="white-space: pre-wrap;">@Model.AdminReply</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Reply & Update Status</h5>
+
+                    @if (isClosed)
+                    {
+                        <div class="alert alert-secondary">
+                            🔒 This ticket is <strong>Closed</strong>. No further replies are allowed.
+                        </div>
+
+                        <form asp-action="ReplyTicket" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="adminReply" value="@Model.AdminReply" />
+                            <input type="hidden" name="status" value="1" />  @* 1 = Open *@
+                            <button type="submit" class="btn btn-warning w-100 mb-2"
+                                    onclick="return confirm('Reopen this ticket?');">
+                                🔓 Reopen Ticket
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="ReplyTicket" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label class="form-label">Reply</label>
+                                <textarea name="adminReply" class="form-control" rows="6"
+                                          placeholder="Write your response...">@Model.AdminReply</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="1" selected="@(Model.Status == SupportStatus.Open)">Open</option>
+                                    <option value="2" selected="@(Model.Status == SupportStatus.InProgress)">In Progress</option>
+                                    <option value="3" selected="@(Model.Status == SupportStatus.Resolved)">Resolved</option>
+                                    <option value="4" selected="@(Model.Status == SupportStatus.Closed)">Closed</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 mb-2">Send Reply</button>
+                        </form>
+                    }
+
+                    <form asp-action="DeleteTicket" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Delete this ticket permanently?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger w-100">Delete Ticket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

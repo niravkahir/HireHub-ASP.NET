@@ -1,0 +1,101 @@
+﻿@model List<HireHub.Models.Entities.ApplicationUser>
+@{
+    ViewData["Title"] = "Manage Users";
+    var userRoles = ViewBag.UserRoles as Dictionary<string, string> ?? new();
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">👥 Manage Users</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <form method="get" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" name="search" value="@ViewBag.SearchTerm"
+                           class="form-control" placeholder="Search by name or email..." />
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Recruiter">Recruiter</option>
+                        <option value="JobSeeker">Job Seeker</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="blocked" class="form-select">
+                        <option value="">All Users</option>
+                        <option value="false">Active Only</option>
+                        <option value="true">Blocked Only</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted">Total: <strong>@Model.Count</strong> user(s)</p>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr class="@(user.IsBlocked ? "table-danger" : "")">
+                    <td class="fw-bold">@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@(user.PhoneNumber ?? "—")</td>
+                    <td>
+                        @{
+                            var role = userRoles.ContainsKey(user.Id) ? userRoles[user.Id] : "—";
+                            var badge = role switch
+                            {
+                                "Admin" => "bg-danger",
+                                "Recruiter" => "bg-info text-dark",
+                                "JobSeeker" => "bg-success",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badge">@role</span>
+                    </td>
+                    <td>
+                        @if (user.IsBlocked)
+                        {
+                            <span class="badge bg-danger">Blocked</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </td>
+                    <td>@user.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <a asp-action="UserDetails" asp-route-id="@user.Id"
+                           class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

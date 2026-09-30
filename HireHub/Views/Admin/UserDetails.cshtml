@@ -1,0 +1,119 @@
+﻿@model HireHub.Models.Entities.ApplicationUser
+@{
+    ViewData["Title"] = "User Details";
+    var roles = ViewBag.Roles as IList<string> ?? new List<string>();
+    var seekerProfile = ViewBag.SeekerProfile as HireHub.Models.Entities.JobSeekerProfile;
+    var recruiterProfile = ViewBag.RecruiterProfile as HireHub.Models.Entities.RecruiterProfile;
+}
+
+<div class="container mt-4">
+    <a asp-action="Users" class="btn btn-sm btn-outline-secondary mb-3">← Back to Users</a>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h3>@Model.FullName</h3>
+
+                    @if (Model.IsBlocked)
+                    {
+                        <span class="badge bg-danger mb-2">🚫 BLOCKED</span>
+                    }
+
+                    <ul class="list-unstyled mt-3">
+                        <li>📧 <strong>Email:</strong> @Model.Email</li>
+                        <li>📞 <strong>Phone:</strong> @(Model.PhoneNumber ?? "—")</li>
+                        <li>🆔 <strong>User ID:</strong> <code>@Model.Id</code></li>
+                        <li>📅 <strong>Joined:</strong> @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</li>
+                        <li>🎭 <strong>Role:</strong>
+                            @foreach (var r in roles)
+                            {
+                                <span class="badge bg-primary">@r</span>
+                            }
+                        </li>
+                    </ul>
+
+                    @if (seekerProfile != null)
+                    {
+                        <hr />
+                        <h5>Job Seeker Info</h5>
+                        <p><strong>Location:</strong> @(seekerProfile.Location ?? "—")</p>
+                        <p><strong>Skills:</strong> @(seekerProfile.Skills ?? "—")</p>
+                        <p><strong>Applications:</strong> @ViewBag.ApplicationCount</p>
+                    }
+
+                    @if (recruiterProfile != null)
+                    {
+                        <hr />
+                        <h5>Recruiter Info</h5>
+                        <p><strong>Company:</strong> @(recruiterProfile.Company?.Name ?? "None")</p>
+                        <p><strong>Posted Jobs:</strong> @ViewBag.JobCount</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Block / Unblock -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5>Account Access</h5>
+
+                    @if (Model.IsBlocked)
+                    {
+                        <p class="text-danger small">This user is currently blocked and cannot log in.</p>
+
+                        <form asp-action="ToggleBlock" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success w-100"
+                                    onclick="return confirm('Unblock this user?');">
+                                ✅ Unblock User
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">This user can currently log in.</p>
+
+                        <form asp-action="ToggleBlock" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-warning w-100"
+                                    onclick="return confirm('Block this user?');">
+                                🚫 Block User
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+
+            <!-- Delete User -->
+            <div class="card shadow-sm border-danger">
+                <div class="card-body">
+                    <h5 class="text-danger">Danger Zone</h5>
+                    <p class="small text-muted">
+                        Deleting a user removes their profile, applications, saved jobs,
+                        interviews, and (if recruiter) all associated jobs + company.
+                    </p>
+
+                    <form asp-action="DeleteUser" method="post"
+                          onsubmit="return confirm('Permanently delete this user and ALL related data? This cannot be undone.');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-danger w-100">Delete User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

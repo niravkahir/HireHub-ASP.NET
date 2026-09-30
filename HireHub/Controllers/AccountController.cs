@@ -41,19 +41,17 @@ namespace HireHub.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 PhoneNumber = model.PhoneNumber,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                CreatedAt = DateTime.UtcNow,
+                IsBlocked = false
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                // Assign role based on selection
                 string role = model.Role == "Recruiter" ? "Recruiter" : "JobSeeker";
                 await _userManager.AddToRoleAsync(user, role);
-
-                // (Optional) Create empty profile
-                // We'll do this in a later phase.
 
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 return RedirectToAction("Index", "Dashboard");
@@ -67,8 +65,13 @@ namespace HireHub.Controllers
 
         // ============ LOGIN ============
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Login(string? blocked = null)
         {
+            if (blocked == "true")
+            {
+                ViewBag.BlockedMessage = "Your account has been blocked by the administrator.";
+            }
+
             return View();
         }
 
@@ -78,6 +81,23 @@ namespace HireHub.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // 1) Check if user exists
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Invalid email or password.");
+                return View(model);
+            }
+
+            // 2) Check if user is blocked BEFORE attempting sign-in
+            if (user.IsBlocked)
+            {
+                ModelState.AddModelError("", "🚫 Your account has been blocked by the administrator. Please contact support.");
+                return View(model);
+            }
+
+            // 3) Try password sign-in
             var result = await _signInManager.PasswordSignInAsync(
                 model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 

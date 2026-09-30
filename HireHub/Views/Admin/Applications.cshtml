@@ -1,0 +1,119 @@
+﻿@model List<HireHub.Models.Entities.JobApplication>
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "Manage Applications";
+    var currentStatus = ViewBag.StatusFilter as ApplicationStatus?;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">📄 Manage Applications</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <!-- Filter Form -->
+    <form method="get" asp-action="Applications" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Filter by Status</label>
+                    <select name="status" class="form-select">
+                        <option value="" selected="@(currentStatus == null)">All</option>
+                        <option value="1" selected="@(currentStatus == ApplicationStatus.Applied)">Applied</option>
+                        <option value="2" selected="@(currentStatus == ApplicationStatus.UnderReview)">Under Review</option>
+                        <option value="3" selected="@(currentStatus == ApplicationStatus.Shortlisted)">Shortlisted</option>
+                        <option value="4" selected="@(currentStatus == ApplicationStatus.InterviewScheduled)">Interview Scheduled</option>
+                        <option value="5" selected="@(currentStatus == ApplicationStatus.Rejected)">Rejected</option>
+                        <option value="6" selected="@(currentStatus == ApplicationStatus.Hired)">Hired</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary me-2">🔍 Filter</button>
+                    <a asp-action="Applications" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted">
+        Total: <strong>@Model.Count</strong> application(s)
+        @if (currentStatus != null)
+        {
+            <span>— Filtered by: <strong>@currentStatus</strong></span>
+        }
+    </p>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No applications found.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Applicant</th>
+                    <th>Job</th>
+                    <th>Company</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                    <th>Interview</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var app in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@app.JobSeekerProfile?.User?.FullName</strong><br />
+                            <small class="text-muted">@app.JobSeekerProfile?.User?.Email</small>
+                        </td>
+                        <td>@app.Job?.Title</td>
+                        <td>@app.Job?.Company?.Name</td>
+                        <td>@app.AppliedAt.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @{
+                                var badgeClass = app.Status switch
+                                {
+                                    ApplicationStatus.Applied => "bg-secondary",
+                                    ApplicationStatus.UnderReview => "bg-warning text-dark",
+                                    ApplicationStatus.Shortlisted => "bg-info text-dark",
+                                    ApplicationStatus.InterviewScheduled => "bg-primary",
+                                    ApplicationStatus.Hired => "bg-success",
+                                    ApplicationStatus.Rejected => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@app.Status</span>
+                        </td>
+                        <td>
+                            @if (app.Interview != null)
+                            {
+                                <small>@app.Interview.ScheduledAt.ToString("dd MMM yyyy")</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="DeleteApplication" asp-route-id="@app.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Delete this application?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

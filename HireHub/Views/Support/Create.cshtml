@@ -1,0 +1,40 @@
+﻿@model HireHub.Models.Entities.SupportTicket
+@{
+    ViewData["Title"] = "New Support Ticket";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">← Back to My Tickets</a>
+
+            <h2>New Support Ticket</h2>
+            <hr />
+
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label">Subject</label>
+                    <input asp-for="Subject" class="form-control"
+                           placeholder="e.g. Cannot apply to a job" />
+                    <span asp-validation-for="Subject" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Message" class="form-label">Describe your issue</label>
+                    <textarea asp-for="Message" class="form-control" rows="6"
+                              placeholder="Explain what happened, what you expected, and any steps to reproduce."></textarea>
+                    <span asp-validation-for="Message" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Ticket</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

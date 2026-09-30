@@ -1,0 +1,150 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">🛠️ Admin Dashboard</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Stat Cards Row 1 -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow-sm">
+                <div class="card-body">
+                    <h6>Total Users</h6>
+                    <h2>@ViewBag.TotalUsers</h2>
+                    <small>
+                        @ViewBag.TotalRecruiters Recruiters • @ViewBag.TotalJobSeekers Seekers
+                        @if (ViewBag.BlockedCount > 0)
+                        {
+                            <br />
+                            <span class="text-warning fw-bold">🚫 @ViewBag.BlockedCount Blocked</span>
+                        }
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body">
+                    <h6>Companies</h6>
+                    <h2>@ViewBag.TotalCompanies</h2>
+                    <small>Registered employers</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info shadow-sm">
+                <div class="card-body">
+                    <h6>Total Jobs</h6>
+                    <h2>@ViewBag.TotalJobs</h2>
+                    <small>@ViewBag.ActiveJobs Active • @ViewBag.ClosedJobs Closed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning shadow-sm">
+                <div class="card-body">
+                    <h6>Applications</h6>
+                    <h2>@ViewBag.TotalApplications</h2>
+                    <small>@ViewBag.TotalInterviews Interviews scheduled</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Breakdown Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Applied</h6>
+                    <h3>@ViewBag.AppliedCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Shortlisted</h6>
+                    <h3>@ViewBag.ShortlistedCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Hired</h6>
+                    <h3 class="text-success">@ViewBag.HiredCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Rejected</h6>
+                    <h3 class="text-danger">@ViewBag.RejectedCount</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-4">
+        <a asp-action="Users" class="btn btn-outline-primary me-2">👥 Manage Users</a>
+        <a asp-action="Jobs" class="btn btn-outline-info me-2">💼 Manage Jobs</a>
+        <a asp-action="Applications" class="btn btn-outline-warning me-2">📄 Applications</a>
+        <a asp-action="Tickets" class="btn btn-outline-success">💬 Support Tickets</a>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>Recent Jobs</strong>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var job in ViewBag.RecentJobs as List<HireHub.Models.Entities.Job>)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>@job.Title <small class="text-muted">— @job.Company?.Name</small></span>
+                            <small class="text-muted">@job.PostedAt.ToString("dd MMM")</small>
+                        </li>
+                    }
+                    @if (!(ViewBag.RecentJobs as List<HireHub.Models.Entities.Job>).Any())
+                    {
+                        <li class="list-group-item text-muted">No jobs yet.</li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <strong>Recent Applications</strong>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var app in ViewBag.RecentApplications as List<HireHub.Models.Entities.JobApplication>)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>
+                                @app.JobSeekerProfile?.User?.FullName
+                                <small class="text-muted">→ @app.Job?.Title</small>
+                            </span>
+                            <small class="text-muted">@app.AppliedAt.ToString("dd MMM")</small>
+                        </li>
+                    }
+                    @if (!(ViewBag.RecentApplications as List<HireHub.Models.Entities.JobApplication>).Any())
+                    {
+                        <li class="list-group-item text-muted">No applications yet.</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

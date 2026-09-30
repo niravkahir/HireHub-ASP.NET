@@ -1,0 +1,94 @@
+﻿@model List<HireHub.Models.Entities.Job>
+@{
+    ViewData["Title"] = "Manage Jobs";
+    var appCounts = ViewBag.AppCounts as Dictionary<int, int> ?? new();
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">💼 Manage Jobs</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form method="get" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <input type="text" name="search" value="@ViewBag.SearchTerm"
+                           class="form-control" placeholder="Search by title or company..." />
+                </div>
+                <div class="col-md-4">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted">Total: <strong>@Model.Count</strong> job(s)</p>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Posted</th>
+                <th>Applications</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var job in Model)
+            {
+                <tr>
+                    <td class="fw-bold">@job.Title</td>
+                    <td>@job.Company?.Name</td>
+                    <td>@job.Location</td>
+                    <td>@job.PostedAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <span class="badge bg-secondary">
+                            @(appCounts.ContainsKey(job.Id) ? appCounts[job.Id] : 0)
+                        </span>
+                    </td>
+                    <td>
+                        @if (job.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Closed</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="Browse" asp-action="Details" asp-route-id="@job.Id"
+                           class="btn btn-sm btn-outline-primary" target="_blank">View</a>
+
+                        <form asp-action="ToggleJobStatus" asp-route-id="@job.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-info">
+                                @(job.IsActive ? "Close" : "Reopen")
+                            </button>
+                        </form>
+
+                        <form asp-action="DeleteJob" asp-route-id="@job.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('Delete this job AND all its applications?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

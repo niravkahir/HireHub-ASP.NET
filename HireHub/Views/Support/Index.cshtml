@@ -1,0 +1,75 @@
+﻿@model List<HireHub.Models.Entities.SupportTicket>
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "My Support Tickets";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>💬 My Support Tickets</h2>
+        <a asp-action="Create" class="btn btn-primary">+ New Ticket</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You haven't opened any support tickets yet.
+            <a asp-action="Create">Create one</a> if you need help.
+        </div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Subject</th>
+                    <th>Status</th>
+                    <th>Opened</th>
+                    <th>Replied</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ticket in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@ticket.Subject</td>
+                        <td>
+                            @{
+                                var badgeClass = ticket.Status switch
+                                {
+                                    SupportStatus.Open => "bg-success",
+                                    SupportStatus.InProgress => "bg-warning text-dark",
+                                    SupportStatus.Resolved => "bg-info text-dark",
+                                    SupportStatus.Closed => "bg-secondary",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@ticket.Status</span>
+                        </td>
+                        <td>@ticket.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
+                        <td>
+                            @if (ticket.RepliedAt.HasValue)
+                            {
+                                <span class="text-success small">✅ @ticket.RepliedAt.Value.ToString("dd MMM yyyy")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@ticket.Id"
+                               class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

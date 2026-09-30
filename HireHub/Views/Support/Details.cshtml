@@ -1,0 +1,90 @@
+﻿@model HireHub.Models.Entities.SupportTicket
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "Ticket Details";
+}
+
+<div class="container mt-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">← Back to My Tickets</a>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <h3>@Model.Subject</h3>
+                @{
+                    var badgeClass = Model.Status switch
+                    {
+                        SupportStatus.Open => "bg-success",
+                        SupportStatus.InProgress => "bg-warning text-dark",
+                        SupportStatus.Resolved => "bg-info text-dark",
+                        SupportStatus.Closed => "bg-secondary",
+                        _ => "bg-secondary"
+                    };
+                }
+                <span class="badge @badgeClass fs-6">@Model.Status</span>
+            </div>
+
+            <p class="text-muted small mt-2">
+                Ticket #@Model.Id • Opened @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <span>• Updated @Model.UpdatedAt.Value.ToString("dd MMM yyyy HH:mm")</span>
+                }
+            </p>
+
+            <hr />
+
+            <h5>Your Message</h5>
+            <p style="white-space: pre-wrap;">@Model.Message</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.AdminReply))
+    {
+        <div class="card shadow-sm border-success mb-3">
+            <div class="card-body">
+                <h5 class="text-success">🛡️ Admin Reply</h5>
+                <p class="text-muted small">Replied @Model.RepliedAt?.ToString("dd MMM yyyy HH:mm")</p>
+                <p style="white-space: pre-wrap;">@Model.AdminReply</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* Show different message based on status *@
+        if (Model.Status == SupportStatus.Closed)
+        {
+            <div class="alert alert-secondary">
+                🔒 This ticket has been <strong>Closed</strong>. No further replies will be provided.
+                If your issue persists, please open a new ticket.
+            </div>
+        }
+        else if (Model.Status == SupportStatus.Resolved)
+        {
+            <div class="alert alert-info">
+                ✅ This ticket was marked as <strong>Resolved</strong>.
+                If the issue comes back, please open a new ticket.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                ⏳ No reply yet. Our admin will respond shortly.
+            </div>
+        }
+    }
+
+    @if (Model.Status != SupportStatus.Closed && Model.Status != SupportStatus.Resolved)
+    {
+        <form asp-action="Close" asp-route-id="@Model.Id" method="post" class="d-inline"
+              onsubmit="return confirm('Close this ticket? Once closed, no more replies.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-secondary">Close Ticket</button>
+        </form>
+    }
+</div>

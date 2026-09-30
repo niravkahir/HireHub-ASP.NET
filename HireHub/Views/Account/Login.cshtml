@@ -7,6 +7,13 @@
     <div class="col-md-5">
         <h2 class="mb-4">Login to HireHub</h2>
 
+        @if (ViewBag.BlockedMessage != null)
+        {
+            <div class="alert alert-danger">
+                🚫 @ViewBag.BlockedMessage
+            </div>
+        }
+
         <form asp-action="Login" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 

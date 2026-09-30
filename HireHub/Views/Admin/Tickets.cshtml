@@ -1,0 +1,105 @@
+﻿@model List<HireHub.Models.Entities.SupportTicket>
+@using HireHub.Models.Enums
+@{
+    ViewData["Title"] = "Support Tickets";
+    var currentStatus = ViewBag.StatusFilter as SupportStatus?;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">💬 Support Tickets</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form method="get" asp-action="Tickets" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" value="@ViewBag.SearchTerm"
+                           class="form-control" placeholder="Subject, email, name..." />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="" selected="@(currentStatus == null)">All</option>
+                        <option value="1" selected="@(currentStatus == SupportStatus.Open)">Open</option>
+                        <option value="2" selected="@(currentStatus == SupportStatus.InProgress)">In Progress</option>
+                        <option value="3" selected="@(currentStatus == SupportStatus.Resolved)">Resolved</option>
+                        <option value="4" selected="@(currentStatus == SupportStatus.Closed)">Closed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">🔍 Filter</button>
+                    <a asp-action="Tickets" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted">Total: <strong>@Model.Count</strong> ticket(s)</p>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No tickets found.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>User</th>
+                    <th>Opened</th>
+                    <th>Status</th>
+                    <th>Replied</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td>@t.Id</td>
+                        <td class="fw-bold">@t.Subject</td>
+                        <td>
+                            @t.User.FullName<br />
+                            <small class="text-muted">@t.User.Email</small>
+                        </td>
+                        <td>@t.CreatedAt.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @{
+                                var badgeClass = t.Status switch
+                                {
+                                    SupportStatus.Open => "bg-success",
+                                    SupportStatus.InProgress => "bg-warning text-dark",
+                                    SupportStatus.Resolved => "bg-info text-dark",
+                                    SupportStatus.Closed => "bg-secondary",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@t.Status</span>
+                        </td>
+                        <td>
+                            @if (t.RepliedAt.HasValue)
+                            {
+                                <span class="text-success small">✅</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="TicketDetails" asp-route-id="@t.Id"
+                               class="btn btn-sm btn-primary">Open</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
