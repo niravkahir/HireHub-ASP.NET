@@ -1,4 +1,5 @@
 using HireHub.Data;
+using HireHub.Middleware;
 using HireHub.Models.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
 
-    // Optional: relax lockout for dev
     options.Lockout.AllowedForNewUsers = true;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
@@ -46,20 +46,36 @@ using (var scope = app.Services.CreateScope())
     await DataSeeder.SeedAsync(services);
 }
 
-// 5. Middleware pipeline
+// ============================================================
+// 5. MIDDLEWARE PIPELINE
+// ============================================================
+
+// 5.1 — Global exception logging (custom middleware)
+app.UseMiddleware<ExceptionLoggingMiddleware>();
+
+// 5.2 — Exception handler
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+else
+{
+    // Show detailed errors during development
+    app.UseDeveloperExceptionPage();
+}
 
+// 5.3 — Custom 404 / status code pages
+app.UseStatusCodePagesWithReExecute("/Home/StatusCode", "?code={0}");
+
+// 5.4 — Standard pipeline
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
 
-// ✅ MIDDLEWARE: Kick out blocked users immediately
+// 5.5 — Kick out blocked users immediately
 app.Use(async (context, next) =>
 {
     if (context.User.Identity != null && context.User.Identity.IsAuthenticated)

@@ -9,8 +9,13 @@ namespace HireHub.Models.ViewModels
         public string? Location { get; set; }
         public JobType? JobType { get; set; }
         public ExperienceLevel? ExperienceLevel { get; set; }
-        public decimal? MinSalary { get; set; }
 
         public List<Job> Results { get; set; } = new();
+
+        // Pagination
+        public int CurrentPage { get; set; } = 1;
+        public int PageSize { get; set; } = 5;   
+        public int TotalJobs { get; set; }
+        public int TotalPages => (int)Math.Ceiling((double)TotalJobs / PageSize);
     }
 }

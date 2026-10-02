@@ -21,14 +21,18 @@ namespace HireHub.Controllers
         }
 
         // GET: /Browse  (unchanged from before)
+        // GET: /Browse
         public async Task<IActionResult> Index(string? keyword, string? location,
-            JobType? jobType, ExperienceLevel? experienceLevel)
+            JobType? jobType, ExperienceLevel? experienceLevel, int page = 1)
         {
+            const int pageSize = 5;
+
             var query = _db.Jobs
                 .Include(j => j.Company)
                 .Where(j => j.IsActive)
                 .AsQueryable();
 
+            // Filters
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(j =>
@@ -46,8 +50,16 @@ namespace HireHub.Controllers
             if (experienceLevel.HasValue)
                 query = query.Where(j => j.ExperienceLevel == experienceLevel.Value);
 
+            // Total count (before paging)
+            var totalJobs = await query.CountAsync();
+
+            // Apply pagination
+            if (page < 1) page = 1;
+
             var jobs = await query
                 .OrderByDescending(j => j.PostedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var vm = new JobSearchViewModel
@@ -56,7 +68,10 @@ namespace HireHub.Controllers
                 Location = location,
                 JobType = jobType,
                 ExperienceLevel = experienceLevel,
-                Results = jobs
+                Results = jobs,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalJobs = totalJobs
             };
 
             ViewBag.JobTypes = new SelectList(Enum.GetValues(typeof(JobType)), jobType);

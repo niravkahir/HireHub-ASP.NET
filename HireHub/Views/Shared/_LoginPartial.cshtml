@@ -1,18 +1,22 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using HireHub.Models.Entities
 @inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
+<ul class="navbar-nav align-items-center">
     @if (SignInManager.IsSignedIn(User))
     {
-        <li class="nav-item">
+        var currentUser = await UserManager.GetUserAsync(User);
+        var displayName = currentUser?.FullName ?? User.Identity!.Name;
+
+        <li class="nav-item d-flex align-items-center">
             <span class="navbar-text text-dark me-3">
-                Hello, <strong>@User.Identity!.Name</strong>!
+                Hello, <strong>@displayName</strong>!
             </span>
         </li>
-        <li class="nav-item">
-            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
+        <li class="nav-item d-flex align-items-center">
+            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline m-0">
+                <button type="submit" class="btn btn-link nav-link text-dark p-0">Logout</button>
             </form>
         </li>
     }

@@ -15,17 +15,37 @@ namespace HireHub.Controllers
 
         public IActionResult Index()
         {
-            // Logged in users → go straight to Dashboard
             if (_signInManager.IsSignedIn(User))
-            {
                 return RedirectToAction("Index", "Dashboard");
-            }
 
             return View();
         }
 
         public IActionResult Privacy()
         {
+            return View();
+        }
+
+        // 🔴 500 Error Page
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View();
+        }
+
+        // 🔴 404 / other status code page
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult StatusCode(int code = 404)
+        {
+            ViewBag.Code = code;
+
+            if (code == 404)
+                ViewBag.Message = "The page you're looking for doesn't exist.";
+            else if (code == 403)
+                ViewBag.Message = "You don't have permission to access this page.";
+            else
+                ViewBag.Message = "Something went wrong.";
+
             return View();
         }
     }

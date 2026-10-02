@@ -45,7 +45,11 @@
     </form>
 
     <p class="text-muted">
-        Found <strong>@Model.Results.Count</strong> job(s)
+        Found <strong>@Model.TotalJobs</strong> job(s)
+        @if (Model.TotalPages > 1)
+        {
+            <span>— Page <strong>@Model.CurrentPage</strong> of <strong>@Model.TotalPages</strong></span>
+        }
     </p>
 
     @if (!Model.Results.Any())
@@ -93,6 +97,57 @@
                     </div>
                 </div>
             </div>
+        }
+
+        <!-- ============ PAGINATION ============ -->
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Job pages">
+                <ul class="pagination justify-content-center mt-4">
+
+                    @* Previous *@
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-location="@Model.Location"
+                           asp-route-jobType="@Model.JobType"
+                           asp-route-experienceLevel="@Model.ExperienceLevel"
+                           asp-route-page="@(Model.CurrentPage - 1)">
+                            ← Prev
+                        </a>
+                    </li>   
+
+                    @* Page numbers *@
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-keyword="@Model.Keyword"
+                               asp-route-location="@Model.Location"
+                               asp-route-jobType="@Model.JobType"
+                               asp-route-experienceLevel="@Model.ExperienceLevel"
+                               asp-route-page="@i">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    @* Next *@
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-location="@Model.Location"
+                           asp-route-jobType="@Model.JobType"
+                           asp-route-experienceLevel="@Model.ExperienceLevel"
+                           asp-route-page="@(Model.CurrentPage + 1)">
+                            Next →
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         }
     }
 </div>

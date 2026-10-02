@@ -33,10 +33,6 @@
 
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
-                            </li>
-
                             @if (User.IsInRole("Recruiter"))
                             {
                                 <li class="nav-item">
@@ -85,7 +81,6 @@
                                 </li>
                             }
 
-                            @* Support link — only for non-admins *@
                             @if (!User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">

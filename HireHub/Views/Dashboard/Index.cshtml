@@ -1,50 +1,247 @@
 ﻿@{
     ViewData["Title"] = "Dashboard";
+    var roles = ViewBag.Roles as IList<string> ?? new List<string>();
 }
 
 <div class="container mt-4">
-    <h1>Welcome, @ViewBag.FullName 👋</h1>
-    <p>You are logged in as: <strong>@string.Join(", ", ViewBag.Roles)</strong></p>
-    <p>Email: @ViewBag.Email</p>
+    <h2 class="mb-1">Welcome, @ViewBag.FullName</h2>
+    <p class="text-muted">
+        Logged in as: <strong>@string.Join(", ", roles)</strong> |
+        Email: @ViewBag.Email
+    </p>
 
     <hr />
 
-    @if (ViewBag.Roles.Contains("Admin"))
+    @if (TempData["Success"] != null)
     {
-        <div class="alert alert-danger">
-            <h4>Admin Panel</h4>
-            <p>You can manage users, jobs, and applications from here.</p>
-            <a href="#" class="btn btn-outline-danger">Go to Admin</a>
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
-    else if (ViewBag.Roles.Contains("Recruiter"))
-    {
-        <div class="alert alert-info">
-            <h4>Recruiter Panel</h4>
-            <p>Post jobs, manage company, and review applicants.</p>
 
-            <a asp-controller="Company" asp-action="Index" class="btn btn-outline-info me-2">
-                My Company
-            </a>
-            <a asp-controller="Job" asp-action="Index" class="btn btn-outline-info me-2">
-                My Jobs
-            </a>
-            <a asp-controller="Job" asp-action="Create" class="btn btn-outline-info">
-                Post a Job
-            </a>
-        </div>
+    <!-- ============================================
+         RECRUITER
+         ============================================ -->
+    @if (roles.Contains("Recruiter"))
+    {
+        @if (ViewBag.HasCompany != true)
+        {
+            <div class="alert alert-warning">
+                <strong>You haven't created your company yet.</strong>
+                <br />
+                <a asp-controller="Company" asp-action="Create" class="btn btn-primary btn-sm mt-2">
+                    Create Company
+                </a>
+            </div>
+        }
+        else
+        {
+            <h5 class="mb-3">Company: @ViewBag.CompanyName</h5>
+
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-1">Total Jobs</h6>
+                            <h3 class="mb-0">@ViewBag.TotalJobs</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-1">Active Jobs</h6>
+                            <h3 class="mb-0">@ViewBag.ActiveJobs</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-1">Applications</h6>
+                            <h3 class="mb-0">@ViewBag.TotalApplications</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-1">Interviews</h6>
+                            <h3 class="mb-0">@ViewBag.TotalInterviews</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <a asp-controller="Job" asp-action="Create" class="btn btn-primary btn-sm me-2">
+                    Post New Job
+                </a>
+                <a asp-controller="Job" asp-action="Index" class="btn btn-outline-primary btn-sm me-2">
+                    My Jobs
+                </a>
+                <a asp-controller="Company" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    My Company
+                </a>
+            </div>
+
+            @if (ViewBag.RecentApplications != null &&
+                 (ViewBag.RecentApplications as List<HireHub.Models.Entities.JobApplication>)!.Any())
+            {
+                <h6 class="mb-2">Recent Applications</h6>
+                <ul class="list-group">
+                    @foreach (var app in ViewBag.RecentApplications as List<HireHub.Models.Entities.JobApplication>)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>
+                                <strong>@app.JobSeekerProfile?.User?.FullName</strong>
+                                <small class="text-muted">applied for @app.Job?.Title</small>
+                            </span>
+                            <small class="text-muted">@app.AppliedAt.ToString("dd MMM")</small>
+                        </li>
+                    }
+                </ul>
+            }
+        }
     }
-    else if (ViewBag.Roles.Contains("JobSeeker"))
-    {
-        <div class="alert alert-success">
-            <h4>Job Seeker Panel</h4>
-            <p>Browse jobs, apply, save for later, and track applications.</p>
 
-            <a asp-controller="Browse" asp-action="Index" class="btn btn-outline-success me-2">
+    <!-- ============================================
+         JOB SEEKER
+         ============================================ -->
+    @if (roles.Contains("JobSeeker"))
+    {
+        @if (ViewBag.ProfileIncomplete == true)
+        {
+            <div class="alert alert-warning">
+                <strong>Your profile is incomplete.</strong>
+                <a asp-controller="Profile" asp-action="Index" class="btn btn-primary btn-sm ms-2">
+                    Complete Profile
+                </a>
+            </div>
+        }
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Applications</h6>
+                        <h3 class="mb-0">@ViewBag.TotalApplications</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Shortlisted</h6>
+                        <h3 class="mb-0">@ViewBag.ShortlistedCount</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Interviews</h6>
+                        <h3 class="mb-0">@ViewBag.InterviewsCount</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Saved Jobs</h6>
+                        <h3 class="mb-0">@ViewBag.SavedCount</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <a asp-controller="Browse" asp-action="Index" class="btn btn-primary btn-sm me-2">
                 Browse Jobs
             </a>
-            <a asp-controller="Application" asp-action="MyApplications" class="btn btn-outline-success">
+            <a asp-controller="Application" asp-action="MyApplications" class="btn btn-outline-primary btn-sm me-2">
                 My Applications
+            </a>
+            <a asp-controller="SavedJob" asp-action="Index" class="btn btn-outline-secondary btn-sm me-2">
+                Saved Jobs
+            </a>
+            <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                My Profile
+            </a>
+        </div>
+
+        @if (ViewBag.RecentApplications != null &&
+             (ViewBag.RecentApplications as List<HireHub.Models.Entities.JobApplication>)!.Any())
+        {
+            <h6 class="mb-2">Recent Applications</h6>
+            <ul class="list-group">
+                @foreach (var app in ViewBag.RecentApplications as List<HireHub.Models.Entities.JobApplication>)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>
+                            <strong>@app.Job?.Title</strong>
+                            <small class="text-muted">— @app.Job?.Company?.Name</small>
+                        </span>
+                        <small class="text-muted">@app.AppliedAt.ToString("dd MMM")</small>
+                    </li>
+                }
+            </ul>
+        }
+    }
+
+    <!-- ============================================
+         ADMIN
+         ============================================ -->
+    @if (roles.Contains("Admin"))
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Total Users</h6>
+                        <h3 class="mb-0">@ViewBag.TotalUsers</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Total Jobs</h6>
+                        <h3 class="mb-0">@ViewBag.TotalJobs</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Applications</h6>
+                        <h3 class="mb-0">@ViewBag.TotalApplications</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-1">Support Tickets</h6>
+                        <h3 class="mb-0">@ViewBag.TotalTickets</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <a asp-controller="Admin" asp-action="Index" class="btn btn-primary btn-sm me-2">
+                Admin Dashboard
+            </a>
+            <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-primary btn-sm me-2">
+                Users
+            </a>
+            <a asp-controller="Admin" asp-action="Jobs" class="btn btn-outline-secondary btn-sm me-2">
+                Jobs
+            </a>
+            <a asp-controller="Admin" asp-action="Applications" class="btn btn-outline-secondary btn-sm me-2">
+                Applications
+            </a>
+            <a asp-controller="Admin" asp-action="Tickets" class="btn btn-outline-secondary btn-sm">
+                Tickets
             </a>
         </div>
     }
