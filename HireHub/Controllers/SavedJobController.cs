@@ -90,7 +90,7 @@ namespace HireHub.Controllers
             return RedirectToAction("Details", "Browse", new { id });
         }
 
-        // POST: /SavedJob/Unsave/5  (5 = JobId)
+        // POST: /SavedJob/Unsave/5  
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Unsave(int id, string? returnUrl = null)

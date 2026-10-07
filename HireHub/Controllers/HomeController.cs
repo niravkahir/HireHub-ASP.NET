@@ -21,14 +21,14 @@ namespace HireHub.Controllers
             return View();
         }
 
-        // 🔴 500 Error Page
+        // 500 Error Page
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             return View();
         }
 
-        // 🔴 404 / other status code page
+        // 404 / other status code page
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult StatusCode(int code = 404)
         {

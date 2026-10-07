@@ -23,9 +23,6 @@ namespace HireHub.Controllers
             _userManager = userManager;
         }
 
-        // ============================================
-        // DASHBOARD
-        // ============================================
         public async Task<IActionResult> Index()
         {
             var totalUsers = await _db.Users.CountAsync();
@@ -78,9 +75,6 @@ namespace HireHub.Controllers
             return View();
         }
 
-        // ============================================
-        // MANAGE USERS
-        // ============================================
         public async Task<IActionResult> Users(string? role, string? search, bool? blocked)
         {
             var query = _db.Users.AsQueryable();
@@ -156,7 +150,6 @@ namespace HireHub.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return NotFound();
 
-            // Prevent blocking own account
             var currentUserId = _userManager.GetUserId(User);
             if (userId == currentUserId)
             {
@@ -190,15 +183,12 @@ namespace HireHub.Controllers
 
             try
             {
-                // ============================
-                // 1. Delete seeker profile + all related data
-                // ============================
+
                 var seekerProfile = await _db.JobSeekerProfiles
                     .FirstOrDefaultAsync(p => p.UserId == userId);
 
                 if (seekerProfile != null)
                 {
-                    // Delete interviews → then applications → then saved jobs
                     var apps = await _db.JobApplications
                         .Include(a => a.Interview)
                         .Where(a => a.JobSeekerProfileId == seekerProfile.Id)
@@ -220,9 +210,7 @@ namespace HireHub.Controllers
                     _db.JobSeekerProfiles.Remove(seekerProfile);
                 }
 
-                // ============================
-                // 2. Delete recruiter profile + company + jobs
-                // ============================
+
                 var recruiterProfile = await _db.RecruiterProfiles
                     .FirstOrDefaultAsync(r => r.UserId == userId);
 
@@ -232,7 +220,6 @@ namespace HireHub.Controllers
                     {
                         var companyId = recruiterProfile.CompanyId.Value;
 
-                        // Get all jobs of this company
                         var jobs = await _db.Jobs
                             .Where(j => j.CompanyId == companyId)
                             .ToListAsync();
@@ -259,14 +246,12 @@ namespace HireHub.Controllers
 
                         _db.Jobs.RemoveRange(jobs);
 
-                        // Detach any OTHER recruiters attached to this company
                         var otherRecruiters = await _db.RecruiterProfiles
                             .Where(r => r.CompanyId == companyId && r.UserId != userId)
                             .ToListAsync();
                         foreach (var r in otherRecruiters)
                             r.CompanyId = null;
 
-                        // Delete the company
                         var company = await _db.Companies.FindAsync(companyId);
                         if (company != null)
                             _db.Companies.Remove(company);
@@ -275,11 +260,6 @@ namespace HireHub.Controllers
                     _db.RecruiterProfiles.Remove(recruiterProfile);
                 }
 
-                // ============================
-                // 3. Jobs posted by this user (as recruiter via PostedByUserId)
-                // ============================
-                // Note: this handles the case where jobs were posted by a user who is
-                // NOT the current owner of the company (edge case)
                 var postedJobs = await _db.Jobs
                     .Where(j => j.PostedByUserId == userId)
                     .ToListAsync();
@@ -310,9 +290,6 @@ namespace HireHub.Controllers
 
                 await _db.SaveChangesAsync();
 
-                // ============================
-                // 4. Clean up Identity records (roles, claims, etc.)
-                // ============================
                 var roles = await _userManager.GetRolesAsync(user);
                 if (roles.Any())
                     await _userManager.RemoveFromRolesAsync(user, roles);
@@ -325,9 +302,6 @@ namespace HireHub.Controllers
                 foreach (var login in logins)
                     await _userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
 
-                // ============================
-                // 5. Finally delete the user
-                // ============================
                 var email = user.Email;
                 var result = await _userManager.DeleteAsync(user);
 
@@ -348,9 +322,6 @@ namespace HireHub.Controllers
             }
         }
 
-        // ============================================
-        // MANAGE JOBS
-        // ============================================
         public async Task<IActionResult> Jobs(string? status, string? search)
         {
             var query = _db.Jobs.Include(j => j.Company).AsQueryable();
@@ -422,9 +393,6 @@ namespace HireHub.Controllers
             return RedirectToAction(nameof(Jobs));
         }
 
-        // ============================================
-        // MANAGE APPLICATIONS
-        // ============================================
         // GET: /Admin/Applications
         public async Task<IActionResult> Applications(ApplicationStatus? status)
         {
@@ -467,10 +435,6 @@ namespace HireHub.Controllers
             return RedirectToAction(nameof(Applications));
         }
 
-        // ============================================
-        // MANAGE SUPPORT TICKETS
-        // ============================================
-        // GET: /Admin/Tickets
         public async Task<IActionResult> Tickets(SupportStatus? status, string? search)
         {
             var query = _db.SupportTickets

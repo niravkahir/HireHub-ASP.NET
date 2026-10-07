@@ -69,7 +69,6 @@ namespace HireHub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Schedule(int id, Interview model)
         {
-            // Remove validation errors for navigation properties
             ModelState.Remove("JobApplication");
             ModelState.Remove("CreatedAt");
 
@@ -85,7 +84,6 @@ namespace HireHub.Controllers
 
             if (application == null) return NotFound();
 
-            // Future date check
             if (model.ScheduledAt < DateTime.Now.AddMinutes(-5))
             {
                 ModelState.AddModelError("ScheduledAt", "Interview must be scheduled for a future date/time.");
@@ -97,12 +95,9 @@ namespace HireHub.Controllers
                 return View(model);
             }
 
-            // ============================================
-            // CREATE OR UPDATE INTERVIEW
-            // ============================================
             if (application.Interview == null)
             {
-                // CASE 1: No interview yet → create new
+                
                 var interview = new Interview
                 {
                     JobApplicationId = application.Id,
@@ -116,16 +111,14 @@ namespace HireHub.Controllers
             }
             else
             {
-                // CASE 2: Interview already exists → update it
+
                 application.Interview.ScheduledAt = model.ScheduledAt;
                 application.Interview.Mode = string.IsNullOrEmpty(model.Mode) ? "Online" : model.Mode;
                 application.Interview.Location = model.Location;
                 application.Interview.Notes = model.Notes;
             }
 
-            // ============================================
-            // AUTO-UPDATE STATUS
-            // ============================================
+
             application.Status = ApplicationStatus.InterviewScheduled;
             application.UpdatedAt = DateTime.UtcNow;
 
@@ -153,7 +146,6 @@ namespace HireHub.Controllers
 
             _db.Interviews.Remove(application.Interview);
 
-            // Reset status to Shortlisted
             application.Status = ApplicationStatus.Shortlisted;
             application.UpdatedAt = DateTime.UtcNow;
 

@@ -24,10 +24,6 @@ namespace HireHub.Controllers
             _env = env;
         }
 
-        // ============================================
-        // HELPERS
-        // ============================================
-
         private async Task<JobSeekerProfile?> GetMyProfileAsync()
         {
             var userId = _userManager.GetUserId(User);
@@ -58,9 +54,6 @@ namespace HireHub.Controllers
             return profile?.Company;
         }
 
-        // ============================================
-        // JOB SEEKER ACTIONS
-        // ============================================
 
         // GET: /Application/Apply/5
         [Authorize(Roles = "JobSeeker")]
@@ -105,7 +98,6 @@ namespace HireHub.Controllers
 
             if (job == null) return NotFound();
 
-            // ✅ NEW: Deadline check (server-side, cannot be bypassed)
             if (job.Deadline.HasValue && job.Deadline.Value.Date < DateTime.UtcNow.Date)
             {
                 TempData["Error"] = "The application deadline for this job has passed.";
@@ -227,10 +219,6 @@ namespace HireHub.Controllers
             TempData["Success"] = "Application withdrawn successfully.";
             return RedirectToAction(nameof(MyApplications));
         }
-
-        // ============================================
-        // RECRUITER ACTIONS
-        // ============================================
 
         // GET: /Application/JobApplications/5
         [Authorize(Roles = "Recruiter")]

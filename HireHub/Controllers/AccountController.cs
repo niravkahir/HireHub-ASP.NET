@@ -22,7 +22,6 @@ namespace HireHub.Controllers
             _roleManager = roleManager;
         }
 
-        // ============ REGISTER ============
         [HttpGet]
         public IActionResult Register()
         {
@@ -63,7 +62,6 @@ namespace HireHub.Controllers
             return View(model);
         }
 
-        // ============ LOGIN ============
         [HttpGet]
         public IActionResult Login(string? blocked = null)
         {
@@ -81,7 +79,6 @@ namespace HireHub.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            // 1) Check if user exists
             var user = await _userManager.FindByEmailAsync(model.Email);
 
             if (user == null)
@@ -90,14 +87,12 @@ namespace HireHub.Controllers
                 return View(model);
             }
 
-            // 2) Check if user is blocked BEFORE attempting sign-in
             if (user.IsBlocked)
             {
                 ModelState.AddModelError("", "🚫 Your account has been blocked by the administrator. Please contact support.");
                 return View(model);
             }
 
-            // 3) Try password sign-in
             var result = await _signInManager.PasswordSignInAsync(
                 model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
@@ -108,7 +103,6 @@ namespace HireHub.Controllers
             return View(model);
         }
 
-        // ============ LOGOUT ============
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -118,7 +112,6 @@ namespace HireHub.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // ============ ACCESS DENIED ============
         [HttpGet]
         public IActionResult AccessDenied()
         {

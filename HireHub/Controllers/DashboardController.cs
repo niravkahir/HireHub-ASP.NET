@@ -61,7 +61,6 @@ namespace HireHub.Controllers
                         .Include(a => a.Interview)
                         .CountAsync(a => jobIds.Contains(a.JobId) && a.Interview != null);
 
-                    // Recent applicants
                     ViewBag.RecentApplications = await _db.JobApplications
                         .Include(a => a.Job)
                         .Include(a => a.JobSeekerProfile)
@@ -74,7 +73,6 @@ namespace HireHub.Controllers
             }
             else if (roles.Contains("JobSeeker"))
             {
-                // JobSeeker stats
                 var profile = await _db.JobSeekerProfiles
                     .FirstOrDefaultAsync(p => p.UserId == user.Id);
 
@@ -98,7 +96,6 @@ namespace HireHub.Controllers
                         .CountAsync(a => a.JobSeekerProfileId == profile.Id
                             && a.Status == Models.Enums.ApplicationStatus.Hired);
 
-                    // Recent applications
                     ViewBag.RecentApplications = await _db.JobApplications
                         .Include(a => a.Job)
                             .ThenInclude(j => j.Company)

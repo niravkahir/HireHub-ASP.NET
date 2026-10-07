@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HireHub.Controllers
 {
-    // Public controller — anyone can browse jobs
+
     public class BrowseController : Controller
     {
         private readonly ApplicationDbContext _db;
