@@ -14,6 +14,10 @@
     {
         <div class="alert alert-info">@TempData["Info"]</div>
     }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
 
     <div class="card shadow-sm">
         <div class="card-body">
@@ -27,6 +31,12 @@
                     <div class="mb-3">
                         <span class="badge bg-primary">@Model.JobType</span>
                         <span class="badge bg-info text-dark">@Model.ExperienceLevel</span>
+
+                        @* Show Expired badge if deadline passed *@
+                        @if (ViewBag.IsExpired == true)
+                        {
+                            <span class="badge bg-danger">Expired</span>
+                        }
                     </div>
 
                     <hr />
@@ -58,7 +68,13 @@
 
                             <hr />
 
-                            @if (ViewBag.IsJobSeeker == true)
+                            @if (ViewBag.IsExpired == true)
+                            {
+                                <div class="alert alert-warning text-center mb-0">
+                                    ⏰ Application deadline has passed.
+                                </div>
+                            }
+                            else if (ViewBag.IsJobSeeker == true)
                             {
                                 @if (ViewBag.AlreadyApplied == true)
                                 {

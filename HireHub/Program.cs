@@ -33,7 +33,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.ExpireTimeSpan = TimeSpan.FromDays(1);
     options.SlidingExpiration = true;
 });
 
@@ -45,10 +45,6 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     await DataSeeder.SeedAsync(services);
 }
-
-// ============================================================
-// 5. MIDDLEWARE PIPELINE
-// ============================================================
 
 // 5.1 — Global exception logging (custom middleware)
 app.UseMiddleware<ExceptionLoggingMiddleware>();

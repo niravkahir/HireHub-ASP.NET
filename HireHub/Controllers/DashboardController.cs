@@ -123,4 +123,4 @@ namespace HireHub.Controllers
             return View();
         }
     }
-}
+}   

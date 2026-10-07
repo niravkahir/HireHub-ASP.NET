@@ -62,11 +62,11 @@ namespace HireHub.Controllers
             return View();
         }
 
-        // POST: /Job/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Job model)
         {
+         
             ModelState.Remove("Company");
             ModelState.Remove("PostedBy");
             ModelState.Remove("CompanyId");
@@ -79,17 +79,7 @@ namespace HireHub.Controllers
                 return RedirectToAction("Create", "Company");
             }
 
-            // 🔒 CUSTOM VALIDATION
-            if (model.SalaryMin.HasValue && model.SalaryMax.HasValue
-                && model.SalaryMin > model.SalaryMax)
-            {
-                ModelState.AddModelError("SalaryMax", "Max salary must be greater than or equal to min salary.");
-            }
-
-            if (model.Deadline.HasValue && model.Deadline.Value.Date < DateTime.UtcNow.Date)
-            {
-                ModelState.AddModelError("Deadline", "Deadline must be a future date.");
-            }
+            ValidateJobBusinessRules(model);
 
             if (!ModelState.IsValid) return View(model);
 
@@ -123,7 +113,7 @@ namespace HireHub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Job model)
         {
-            // ✅ FIX: Remove navigation property validation errors
+            // Remove validation errors for navigation properties
             ModelState.Remove("Company");
             ModelState.Remove("PostedBy");
             ModelState.Remove("CompanyId");
@@ -138,6 +128,9 @@ namespace HireHub.Controllers
                 .FirstOrDefaultAsync(j => j.Id == id && j.CompanyId == company.Id);
 
             if (job == null) return NotFound();
+
+            ValidateJobBusinessRules(model);
+
             if (!ModelState.IsValid) return View(model);
 
             job.Title = model.Title;
@@ -209,6 +202,34 @@ namespace HireHub.Controllers
 
             TempData["Success"] = job.IsActive ? "Job activated." : "Job closed.";
             return RedirectToAction(nameof(Index));
+        }
+
+        private void ValidateJobBusinessRules(Job model)
+        {
+
+            if (model.SalaryMin.HasValue && model.SalaryMax.HasValue)
+            {
+                if (model.SalaryMin > model.SalaryMax)
+                {
+                    ModelState.AddModelError("SalaryMax",
+                        "Maximum salary must be greater than or equal to minimum salary.");
+                }
+            }
+
+            if (model.SalaryMin.HasValue && model.SalaryMin < 0)
+            {
+                ModelState.AddModelError("SalaryMin", "Salary cannot be negative.");
+            }
+            if (model.SalaryMax.HasValue && model.SalaryMax < 0)
+            {
+                ModelState.AddModelError("SalaryMax", "Salary cannot be negative.");
+            }
+
+
+            if (model.Deadline.HasValue && model.Deadline.Value.Date < DateTime.Now.Date)
+            {
+                ModelState.AddModelError("Deadline", "Deadline must be today or a future date.");
+            }
         }
     }
 }

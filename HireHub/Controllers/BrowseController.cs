@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HireHub.Controllers
 {
+    // Public controller — anyone can browse jobs
     public class BrowseController : Controller
     {
         private readonly ApplicationDbContext _db;
@@ -20,7 +21,6 @@ namespace HireHub.Controllers
             _userManager = userManager;
         }
 
-        // GET: /Browse  (unchanged from before)
         // GET: /Browse
         public async Task<IActionResult> Index(string? keyword, string? location,
             JobType? jobType, ExperienceLevel? experienceLevel, int page = 1)
@@ -32,7 +32,6 @@ namespace HireHub.Controllers
                 .Where(j => j.IsActive)
                 .AsQueryable();
 
-            // Filters
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(j =>
@@ -42,7 +41,9 @@ namespace HireHub.Controllers
             }
 
             if (!string.IsNullOrWhiteSpace(location))
+            {
                 query = query.Where(j => j.Location != null && j.Location.Contains(location));
+            }
 
             if (jobType.HasValue)
                 query = query.Where(j => j.JobType == jobType.Value);
@@ -50,11 +51,11 @@ namespace HireHub.Controllers
             if (experienceLevel.HasValue)
                 query = query.Where(j => j.ExperienceLevel == experienceLevel.Value);
 
-            // Total count (before paging)
             var totalJobs = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalJobs / (double)pageSize);
 
-            // Apply pagination
             if (page < 1) page = 1;
+            if (page > totalPages && totalPages > 0) page = totalPages;
 
             var jobs = await query
                 .OrderByDescending(j => j.PostedAt)
@@ -70,8 +71,8 @@ namespace HireHub.Controllers
                 ExperienceLevel = experienceLevel,
                 Results = jobs,
                 CurrentPage = page,
-                PageSize = pageSize,
-                TotalJobs = totalJobs
+                TotalJobs = totalJobs,
+                PageSize = pageSize
             };
 
             ViewBag.JobTypes = new SelectList(Enum.GetValues(typeof(JobType)), jobType);
@@ -85,22 +86,16 @@ namespace HireHub.Controllers
         {
             var job = await _db.Jobs
                 .Include(j => j.Company)
-                .FirstOrDefaultAsync(j => j.Id == id);
+                .FirstOrDefaultAsync(j => j.Id == id && j.IsActive);
 
             if (job == null) return NotFound();
 
-            // Job closed → show Closed page
-            if (!job.IsActive)
-            {
-                ViewBag.Job = job;
-                return View("Closed");
-            }
-
             bool alreadyApplied = false;
-            bool isSaved = false;
             bool isJobSeeker = User.Identity != null
                                && User.Identity.IsAuthenticated
                                && User.IsInRole("JobSeeker");
+
+            bool isSaved = false;
 
             if (isJobSeeker)
             {
@@ -113,9 +108,7 @@ namespace HireHub.Controllers
                     if (profile != null)
                     {
                         alreadyApplied = await _db.JobApplications
-                            .AnyAsync(a => a.JobId == id
-                                && a.JobSeekerProfileId == profile.Id
-                                && a.Status != ApplicationStatus.Withdrawn);
+                            .AnyAsync(a => a.JobId == id && a.JobSeekerProfileId == profile.Id);
 
                         isSaved = await _db.SavedJobs
                             .AnyAsync(s => s.JobId == id && s.JobSeekerProfileId == profile.Id);
@@ -123,9 +116,13 @@ namespace HireHub.Controllers
                 }
             }
 
+            bool isExpired = job.Deadline.HasValue
+                             && job.Deadline.Value.Date < DateTime.UtcNow.Date;
+
             ViewBag.AlreadyApplied = alreadyApplied;
-            ViewBag.IsSaved = isSaved;
             ViewBag.IsJobSeeker = isJobSeeker;
+            ViewBag.IsExpired = isExpired;
+            ViewBag.IsSaved = isSaved;
 
             return View(job);
         }

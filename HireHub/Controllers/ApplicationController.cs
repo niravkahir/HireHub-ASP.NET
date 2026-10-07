@@ -28,7 +28,7 @@ namespace HireHub.Controllers
         // HELPERS
         // ============================================
 
-        private async Task<JobSeekerProfile?> GetMySeekerProfileAsync()
+        private async Task<JobSeekerProfile?> GetMyProfileAsync()
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId)) return null;
@@ -72,7 +72,13 @@ namespace HireHub.Controllers
 
             if (job == null) return NotFound();
 
-            var profile = await GetMySeekerProfileAsync();
+            if (job.Deadline.HasValue && job.Deadline.Value.Date < DateTime.UtcNow.Date)
+            {
+                TempData["Error"] = "The application deadline for this job has passed.";
+                return RedirectToAction("Details", "Browse", new { id });
+            }
+
+            var profile = await GetMyProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
             var alreadyApplied = await _db.JobApplications
@@ -91,7 +97,6 @@ namespace HireHub.Controllers
         // POST: /Application/Apply/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> Apply(int id, string? coverLetter, IFormFile? resumeFile)
         {
             var job = await _db.Jobs
@@ -100,7 +105,14 @@ namespace HireHub.Controllers
 
             if (job == null) return NotFound();
 
-            var profile = await GetMySeekerProfileAsync();
+            // ✅ NEW: Deadline check (server-side, cannot be bypassed)
+            if (job.Deadline.HasValue && job.Deadline.Value.Date < DateTime.UtcNow.Date)
+            {
+                TempData["Error"] = "The application deadline for this job has passed.";
+                return RedirectToAction("Details", "Browse", new { id });
+            }
+
+            var profile = await GetMyProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
             var alreadyApplied = await _db.JobApplications
@@ -112,21 +124,40 @@ namespace HireHub.Controllers
                 return RedirectToAction("Details", "Browse", new { id });
             }
 
-            string? resumePath = null;
-            if (resumeFile != null && resumeFile.Length > 0)
+            if (resumeFile == null || resumeFile.Length == 0)
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(resumeFile.FileName);
-                var folder = Path.Combine(_env.WebRootPath, "uploads", "resumes");
-                Directory.CreateDirectory(folder);
-                var filePath = Path.Combine(folder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await resumeFile.CopyToAsync(stream);
-                }
-
-                resumePath = "/uploads/resumes/" + fileName;
+                ViewBag.Job = job;
+                ViewBag.ResumeError = "Please upload your resume before submitting.";
+                return View();
             }
+
+            if (resumeFile.Length > 5 * 1024 * 1024)
+            {
+                ViewBag.Job = job;
+                ViewBag.ResumeError = "Resume file size must be under 5 MB.";
+                return View();
+            }
+
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+            var ext = Path.GetExtension(resumeFile.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(ext))
+            {
+                ViewBag.Job = job;
+                ViewBag.ResumeError = "Only PDF, DOC, or DOCX files are allowed.";
+                return View();
+            }
+
+            var fileName = Guid.NewGuid() + ext;
+            var folder = Path.Combine(_env.WebRootPath, "uploads", "resumes");
+            Directory.CreateDirectory(folder);
+            var filePath = Path.Combine(folder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await resumeFile.CopyToAsync(stream);
+            }
+
+            var resumePath = "/uploads/resumes/" + fileName;
 
             var application = new JobApplication
             {
@@ -149,7 +180,7 @@ namespace HireHub.Controllers
         [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> MyApplications()
         {
-            var profile = await GetMySeekerProfileAsync();
+            var profile = await GetMyProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
             var apps = await _db.JobApplications
@@ -169,7 +200,7 @@ namespace HireHub.Controllers
         [Authorize(Roles = "JobSeeker")]
         public async Task<IActionResult> Withdraw(int id)
         {
-            var profile = await GetMySeekerProfileAsync();
+            var profile = await GetMyProfileAsync();
             if (profile == null) return RedirectToAction("Login", "Account");
 
             var app = await _db.JobApplications
@@ -185,7 +216,6 @@ namespace HireHub.Controllers
                 return RedirectToAction(nameof(MyApplications));
             }
 
-            // Remove associated interview if exists
             if (app.Interview != null)
             {
                 _db.Interviews.Remove(app.Interview);
@@ -268,10 +298,26 @@ namespace HireHub.Controllers
 
             if (application == null) return NotFound();
 
+            if (application.Status == ApplicationStatus.Hired ||
+                application.Status == ApplicationStatus.Rejected ||
+                application.Status == ApplicationStatus.Withdrawn)
+            {
+                TempData["Error"] = $"This application is already '{application.Status}' and cannot be changed.";
+                return RedirectToAction(nameof(ApplicantDetails), new { id });
+            }
+
             // Prevent manual InterviewScheduled — use Schedule Interview button
             if (status == ApplicationStatus.InterviewScheduled)
             {
                 TempData["Error"] = "Use 'Schedule Interview' to set this status.";
+                return RedirectToAction(nameof(ApplicantDetails), new { id });
+            }
+
+            // Prevent setting to Hired unless currently InterviewScheduled
+            if (status == ApplicationStatus.Hired &&
+                application.Status != ApplicationStatus.InterviewScheduled)
+            {
+                TempData["Error"] = "You can only hire a candidate after scheduling an interview.";
                 return RedirectToAction(nameof(ApplicantDetails), new { id });
             }
 

@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "Applicant Details";
     var applicant = Model.JobSeekerProfile.User;
+
+    // Check if the application is in a terminal state
+    var isLocked = Model.Status == ApplicationStatus.Hired
+                || Model.Status == ApplicationStatus.Rejected
+                || Model.Status == ApplicationStatus.Withdrawn;
 }
 
 <div class="container mt-4">
@@ -16,6 +21,10 @@
     @if (TempData["Info"] != null)
     {
         <div class="alert alert-info">@TempData["Info"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
     <div class="row">
@@ -79,27 +88,57 @@
                                 ApplicationStatus.InterviewScheduled => "bg-primary",
                                 ApplicationStatus.Hired => "bg-success",
                                 ApplicationStatus.Rejected => "bg-danger",
+                                ApplicationStatus.Withdrawn => "bg-dark",
                                 _ => "bg-secondary"
                             };
                         }
                         <span class="badge @badgeClass">@Model.Status</span>
                     </p>
 
-                    <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
-                        @Html.AntiForgeryToken()
+                    @if (isLocked)
+                    {
+                        <div class="alert alert-secondary small mb-0 mt-2">
+                            🔒 This application is <strong>@Model.Status</strong>.
+                            Status cannot be changed.
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
 
-                        <label class="form-label">Update to:</label>
-                        <select name="status" class="form-select mb-2">
-                            <option value="1">Applied</option>
-                            <option value="2">Under Review</option>
-                            <option value="3">Shortlisted</option>
-                            <option value="5">Rejected</option>
-                            <option value="6">Hired</option>
-                            @* Note: InterviewScheduled (4) can only be set via Schedule Interview button *@
-                        </select>
+                            <label class="form-label">Update to:</label>
+                            <select name="status" class="form-select mb-2">
+                                @if (Model.Status == ApplicationStatus.Applied)
+                                {
+                                    <option value="@ApplicationStatus.UnderReview">Under Review</option>
+                                }
 
-                        <button type="submit" class="btn btn-primary w-100">Update Status</button>
-                    </form>
+                                @if (Model.Status != ApplicationStatus.Shortlisted &&
+                                     Model.Status != ApplicationStatus.InterviewScheduled)
+                                {
+                                    <option value="@ApplicationStatus.Shortlisted">Shortlist</option>
+                                }
+
+                                <option value="@ApplicationStatus.Rejected">Reject</option>
+                            </select>
+
+                            <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                        </form>
+
+                        @if (Model.Status == ApplicationStatus.InterviewScheduled)
+                        {
+                            <hr />
+                            <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="status" value="@ApplicationStatus.Hired" />
+                                <button type="submit" class="btn btn-success w-100"
+                                        onclick="return confirm('Confirm hire this candidate? This cannot be undone.');">
+                                    ✅ Hire This Candidate
+                                </button>
+                            </form>
+                        }
+                    }
                 </div>
             </div>
 

@@ -62,7 +62,10 @@
                                 <a asp-controller="Browse" asp-action="Details" asp-route-id="@job.Id"
                                    class="btn btn-sm btn-outline-primary">View</a>
 
-                                <form asp-action="UnsaveFromList" asp-route-id="@saved.Id" method="post" class="d-inline"
+                                <!-- ✅ Now passing JobId + returnUrl -->
+                                <form asp-action="Unsave" asp-route-id="@saved.JobId"
+                                      asp-route-returnUrl="@Url.Action("Index", "SavedJob")"
+                                      method="post" class="d-inline"
                                       onsubmit="return confirm('Remove this saved job?');">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
